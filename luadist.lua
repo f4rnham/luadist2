@@ -4,10 +4,13 @@
 
 local dist = require "dist"
 local utils = require "dist.utils"
-local DependencySolver = require "rocksolver.DependencySolver"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
 local path = require "pl.path"
+
+local rocksolver = {}
+rocksolver.DependencySolver = require "rocksolver.DependencySolver"
+rocksolver.utils = require "rocksolver.utils"
 
 -- CLI commands of Luadist.
 local commands
@@ -346,50 +349,35 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
             end
 
             -- If no modules specified explicitly, assume all modules
-            if #modules == 0 then modules = depends.sort_by_names(manifest) end
+            if #modules == 0 then modules = manifest.packages end
             print("Getting dependency information... (this may take a lot of time)")
 
-            for _, module in pairs(modules) do
-                -- If all modules are being queried, extract the name
-                if type(module) == "table" then module = module.name end
+            local lua_version = _VERSION:gsub("Lua ", "")
+            local lua = {packages = {lua = {[lua_version] = {}}}}
 
-                local dep_manifest, err = dist.dependency_info(module, deploy_dir)
-                if not dep_manifest then
+            local solver = rocksolver.DependencySolver(manifest, cfg.platform)
+            local installed = rocksolver.utils.load_manifest(lua, true)
+
+            for k, module in pairs(modules) do
+                -- If all modules are being queried, extract the name
+                if type(module) == "table" then module = k end
+
+                local dependencies, err = solver:resolve_dependencies(module, installed)
+                if not dependencies then
                     print(err)
                     os.exit(1)
                 else
-
-                    -- print the dependency tree
-                    local heading = "Dependency tree for '" .. module .. "' (on " .. cfg.arch .. "-" .. cfg.type .. "):"
+                    -- Print the dependency tree
+                    local heading = "Dependency tree for '" .. module .. "' (on " .. table.concat(cfg.platform, ", ") .. "):"
                     print("\n" .. heading .. "")
                     print(string.rep("=", #heading) .. "\n")
 
-                    for _, pkg in pairs(dep_manifest) do
-
-                        local pkg_version, pkg_tag = pkg.version, pkg.version
-                        if pkg.was_scm_version then
-                            pkg_version, pkg_tag = "scm", "HEAD"
-                        end
-                        print("  " .. pkg.name .. "-" .. pkg_version .. " (" .. pkg.path .. ", " .. pkg_tag .. ")")
-                        if pkg.depends then
-                            for _, dep in pairs(pkg.depends) do
-                                if type(dep) ~= "table" then
-                                    local found = depends.sort_by_versions(depends.find_packages(dep, dep_manifest))[1]
-                                    if not found then
-                                        print("Could not find the dependency '" .. dep .. "' in the dependency manifest.")
-                                        os.exit(1)
-                                    end
-                                    print("    * " .. found.name .. "-" .. found.version .. " (" .. found.path .. ", " .. found.version .. ")")
-                                end
-                            end
-                        end
-                        print()
+                    for _, pkg in pairs(dependencies) do
+                        print("  " .. tostring(pkg))
                     end
-
                 end
             end
             return 0
-
         end
     },
 

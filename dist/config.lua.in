@@ -7,8 +7,7 @@ local utils = require "dist.utils"
 
 -- System information ------------------------------------------------
 version       = "@DIST_VERSION@"   -- Current LuaDist version
-arch          = "@DIST_ARCH@"      -- Host architecture
-type          = "@DIST_TYPE@"      -- Host type
+platform      = {"unix", "linux"}
 
 -- Directories -------------------------------------------------------
 root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or path.sep -- Should be always absolute (is it?) FIXME
