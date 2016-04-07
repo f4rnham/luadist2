@@ -73,9 +73,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
 
     Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
     configuration VARIABLES (e.g. -variable=value) can be specified.
-
-    The -simulate configuration option makes LuaDist only to simulate the
-    installation of modules (no modules will be really installed).
         ]],
 
         run = function (deploy_dir, modules, cmake_variables)
@@ -87,10 +84,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
             assert(type(cmake_variables) == "table", "luadist.install: Argument 'cmake_variables' is not a table.")
             deploy_dir = path.abspath(deploy_dir)
 
-            if cfg.simulate then
-                print("NOTE: this is just simulation.")
-            end
-
             if #modules == 0 then
                 print("No modules to install specified.")
                 return 0
@@ -101,7 +94,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
                 print(err)
                 os.exit(1)
             else
-                print((cfg.simulate and "Simulated installation" or "Installation") .. " successful.")
+                print("Installation successful.")
                 return 0
             end
         end
@@ -350,10 +343,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
 
             -- If no modules specified explicitly, assume all modules
             if #modules == 0 then modules = manifest.packages end
-            print("Getting dependency information... (this may take a lot of time)")
 
-            local lua_version = _VERSION:gsub("Lua ", "")
-            local lua = {packages = {lua = {[lua_version] = {}}}}
+            local lua = {packages = {lua = {[cfg.lua_version] = {}}}}
 
             local solver = rocksolver.DependencySolver(manifest, cfg.platform)
             local installed = rocksolver.utils.load_manifest(lua, true)
@@ -373,7 +364,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                     print(string.rep("=", #heading) .. "\n")
 
                     for _, pkg in pairs(dependencies) do
-                        print("  " .. tostring(pkg))
+                        print("  " .. pkg)
                     end
                 end
             end
@@ -540,7 +531,7 @@ if not commands[arg[1]] and commands[arg[2]] then
     return run_command(arg[1], arg[2], 3)
 elseif commands[arg[1]] then
     -- deploy_dir not specified
-    return run_command(dist.get_deploy_dir(), arg[1], 2)
+    return run_command(cfg.root_dir, arg[1], 2)
 else
     -- unknown command
     if arg[1] then

@@ -8,36 +8,37 @@ local utils = require "dist.utils"
 local pretty = require "pl.pretty"
 local path = require "pl.path"
 
-local rocksolver = {}
-rocksolver.utils = require "rocksolver.utils"
-
 -- Return the joined manifest table from 'cfg.manifest_repos' locations
+local manifest = nil
 function get_manifest()
-    -- Download new manifest
-    local manifest, err = download_manifest(cfg.manifest_repos)
-    if not manifest then return nil, "Error when downloading manifest: " .. err end
+    -- Download manifest if this is first time we are requesting it in this run,
+    -- otherwise it is cached in memory until luadist is terminated
+    if manifest == nil then
+        manifest, err = download_manifest(cfg.manifest_repos)
+        if not manifest then return nil, "Error when downloading manifest: " .. err end
+    end
 
     return manifest
 end
 
--- Download manifest from the table of git 'repository_urls' and return manifest
+-- Download manifest from the table of git 'manifest_urls' and return manifest
 -- table on success and nil and error message on error.
-function download_manifest(repository_urls)
-    repository_urls = repository_urls or cfg.manifest_repos
-    if type(repository_urls) == "string" then repository_urls = {repository_urls} end
+function download_manifest(manifest_urls)
+    manifest_urls = manifest_urls or cfg.manifest_repos
+    if type(manifest_urls) == "string" then manifest_urls = {manifest_urls} end
 
-    assert(type(repository_urls) == "table", "manifest.download_manifest: Argument 'repository_urls' is not a table or string.")
+    assert(type(manifest_urls) == "table", "manifest.download_manifest: Argument 'manifest_urls' is not a table or string.")
 
     local temp_dir = path.join(cfg.root_dir, cfg.temp_dir)
 
     -- Retrieve manifests from repositories and collect them into one manifest table
     local manifest = {repo_path = {}, packages = {}}
 
-    if #repository_urls == 0 then return nil, "No repository url specified." end
+    if #manifest_urls == 0 then return nil, "No manifest url specified." end
 
-    print("Downloading repository information...")
-    for k, repo in pairs(repository_urls) do
-        local clone_dir = path.join(temp_dir, "repository_" .. tostring(k))
+    print("Downloading manifest information...")
+    for k, repo in pairs(manifest_urls) do
+        local clone_dir = path.join(temp_dir, "manifest_" .. tostring(k))
 
         -- Clone the repo and add its 'manifest-file' file to the manifest table
         ok, err = git.create_repo(clone_dir)
@@ -54,7 +55,7 @@ function download_manifest(repository_urls)
             local current_manifest = load_manifest(manifest_file)
 
             for pkg, info in pairs(current_manifest.packages) do
-                -- Keep package info from manifest earlier in 'repository_urls' table if conflicts are found
+                -- Keep package info from manifest earlier in 'manifest_urls' table if conflicts are found
                 if manifest.packages[pkg] == nil then
                     manifest.packages[pkg] = info
                 end
@@ -73,10 +74,10 @@ function download_manifest(repository_urls)
     return manifest
 end
 
--- Load and return manifest table from the manifest file.
--- If manifest file not present, return nil.
-function load_manifest(manifest_file)
-    local fd, err = io.open(manifest_file)
+-- Load (by using provided 'load_fnc') and return table
+-- from lua file 'filename', if file is not present, return nil.
+local function load_file(filename, load_fnc)
+    local fd, err = io.open(filename)
     if not fd then
         return nil, err
     end
@@ -86,5 +87,17 @@ function load_manifest(manifest_file)
         return nil, err
     end
     str = str:gsub("^#![^\n]*\n", "")
-     return pretty.read(str)
+    return load_fnc(str)
+end
+
+-- Load and return manifest table from the manifest file,
+-- if manifest file is not present, return nil.
+function load_manifest(manifest_file)
+    return load_file(manifest_file, pretty.read)
+end
+
+-- Load and return rockspec table from the rockspec file,
+-- if rockspec file is not present, return nil.
+function load_rockspec(rockspec_file)
+    return load_file(rockspec_file, pretty.load)
 end
