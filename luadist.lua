@@ -30,7 +30,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         info      - show information about modules
         search    - search repositories for modules
         tree      - print dependency tree of a module
-        selftest  - run the selftest of LuaDist
 
     To get help on specific command, run:
 
@@ -369,57 +368,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                 end
             end
             return 0
-        end
-    },
-
-    -- Selftest of LuaDist.
-    ["selftest"] = {
-        help = [[
-Usage: luadist [TEST_DIRECTORY] selftest [-VARIABLES...]
-
-    The 'selftest' command runs tests of LuaDist, located in TEST_DIRECTORY and
-    displays the results.
-
-    If no TEST_DIRECTORY is specified, the default test directory of LuaDist
-    deployment directory (i.e. ']] .. cfg.test_dir .. [[') is used.
-
-    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
-    specified.
-        ]],
-
-        run = function (test_dir)
-            error("NYI")
-        --[[
-            test_dir = test_dir or dist.get_deploy_dir()
-            assert(type(test_dir) == "string", "luadist.selftest: Argument 'deploy_dir' is not a string.")
-            test_dir = path.abspath(test_dir)
-
-            -- if the default parameter (i.e. deploy_dir) is passed, use the default test_dir
-            if test_dir == dist.get_deploy_dir() then
-                test_dir = sys.make_path(test_dir, cfg.test_dir)
-            end
-
-            -- try to get an iterator over test files and check it
-            local test_iterator, err = sys.get_directory(test_dir)
-            if not test_iterator then
-                print("Running tests from '" .. test_dir .. "' failed: " .. err)
-                os.exit(1)
-            end
-
-            -- run the tests
-            print("\nRunning tests:")
-            print("==============")
-            for test_file in sys.get_directory(test_dir) do
-                test_file = sys.make_path(test_dir, test_file)
-                if sys.is_file(test_file) then
-                    print()
-                    print(sys.extract_name(test_file) .. ":")
-                    dofile(test_file)
-                end
-            end
-            print()
-            return 0
-        ]]
         end
     },
 }
