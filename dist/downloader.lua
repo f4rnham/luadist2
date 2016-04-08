@@ -5,6 +5,7 @@ local cfg = require "dist.config"
 local git = require "dist.git"
 
 local path = require "pl.path"
+local dir = require "pl.dir"
 local Package = require "rocksolver.Package"
 
 -- Fetch packages (table 'packages') to 'download_dir' from 'repo_paths'. Return table of
@@ -25,7 +26,7 @@ function fetch_pkgs(packages, download_dir, repo_paths)
 
         -- Delete clone_dir if it already exists
         if path.exists(clone_dir) then
-            path.rmdir(clone_dir)
+            dir.rmtree(clone_dir)
         end
 
         if cfg.binary then
@@ -34,7 +35,9 @@ function fetch_pkgs(packages, download_dir, repo_paths)
 
         -- Init the git repository
         local ok, err = git.create_repo(clone_dir)
-        if not ok then return nil, err end
+        if not ok then
+            return nil, err
+        end
 
         print("Downloading " .. pkg .. "...")
 
@@ -56,19 +59,25 @@ function fetch_pkgs(packages, download_dir, repo_paths)
 
         if not sha then
             -- Clean up
-            if not cfg.debug then path.rmdir(clone_dir) end
+            if not cfg.debug then
+                dir.rmtree(clone_dir)
+            end
+
             return nil, "Package " .. pkg .. " not found in provided repositories " .. table.concat(repo_paths, ", ")
         end
 
         if not ok or not sha then
             -- Clean up
-            if not cfg.debug then path.rmdir(clone_dir) end
+            if not cfg.debug then
+                dir.rmtree(clone_dir)
+            end
+
             return nil, "Error fetching package '" .. pkg .. "' from repositories " .. table.concat(repo_paths, ", ") .. " to '" .. download_dir .. "': " .. err
         end
 
         -- Delete '.git' directory
         if not cfg.debug then
-            path.rmdir(path.join(clone_dir, ".git"))
+            dir.rmtree(path.join(clone_dir, ".git"))
         end
 
         fetched_dirs[pkg] = clone_dir

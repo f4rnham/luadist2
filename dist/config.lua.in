@@ -15,8 +15,8 @@ root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or path.s
 temp_dir      = path.join(root_dir, "tmp")
 
 -- Files -------------------------------------------------------------
-manifest_filename = "manifest-file"
-log_file       = path.join(temp_dir, "luadist.log")
+manifest_filename   = "manifest-file"
+log_file            = path.join(temp_dir, "luadist.log")
 
 -- Repositories ------------------------------------------------------
 manifest_repos = {

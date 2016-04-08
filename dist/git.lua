@@ -6,6 +6,7 @@ require "git"
 local cfg = require "dist.config"
 local utils = require "dist.utils"
 local path = require "pl.path"
+local dir = require "pl.dir"
 local pl_utils = require "pl.utils"
 
 
@@ -28,7 +29,7 @@ function clone(repository_url, dest_dir, depth, branch)
     end
 
     command = command .. " " .. utils.quote(dest_dir)
-    if path.exists(dest_dir) then path.rmdir(dest_dir) end
+    if path.exists(dest_dir) then dir.rmtree(dest_dir) end
     path.mkdir(dest_dir)
 
     -- change the current working directory to dest_dir
@@ -298,7 +299,7 @@ end
 function create_repo(dir)
     assert(type(dir) == "string", "git.create_repo: Argument 'dir' is not a string.")
 
-    if path.exists(dir) then path.rmdir(dir) end
+    if path.exists(dir) then dir.rmtree(dir) end
 
     local ok, repo_or_err = pcall(git.repo.create, dir)
     if not ok then return nil, "Error when creating the git repository '" .. dir .. "': " .. repo_or_err end

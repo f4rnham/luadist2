@@ -7,6 +7,7 @@ local git = require "dist.git"
 local utils = require "dist.utils"
 local pretty = require "pl.pretty"
 local path = require "pl.path"
+local dir = require "pl.dir"
 
 -- Return the joined manifest table from 'cfg.manifest_repos' locations
 local manifest = nil
@@ -48,7 +49,10 @@ function download_manifest(manifest_urls)
         if sha then ok, err = git.checkout_sha(sha, clone_dir) end
 
         if not (ok and sha) then
-            if not cfg.debug then path.rmdir(clone_dir) end
+            if not cfg.debug then
+                dir.rmtree(clone_dir)
+            end
+
             return nil, "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
         else
             local manifest_file = path.join(clone_dir, cfg.manifest_filename)
@@ -63,7 +67,9 @@ function download_manifest(manifest_urls)
 
             table.insert(manifest.repo_path, current_manifest.repo_path)
         end
-        if not cfg.debug then path.rmdir(clone_dir) end
+        if not cfg.debug then
+            dir.rmtree(clone_dir)
+        end
     end
 
     -- Save the new manifest table to file for debug purposes

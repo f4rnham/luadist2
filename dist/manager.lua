@@ -4,14 +4,17 @@ local cfg = require "dist.config"
 local mf = require "dist.manifest"
 local utils = require "dist.utils"
 local path = require "pl.path"
+local dir = require "pl.dir"
 local r2cmake = require "rockspec2cmake"
 
 local pl = {}
 pl.utils = require "pl.utils"
+pl.pretty = require "pl.pretty"
 
 local rocksolver = {}
 rocksolver.utils = require "rocksolver.utils"
-local Package = require "rocksolver.Package"
+rocksolver.Package = require "rocksolver.Package"
+rocksolver.const = require "rocksolver.constraints"
 
 -- Builds package from 'src_dir' to 'build_dir' using 'variables'.
 -- Returns true on success or nil, error_message on error.
@@ -70,7 +73,7 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
     deploy_dir = deploy_dir or cfg.root_dir
     variables = variables or {}
 
-    assert(getmetatable(pkg) == Package, "manager.install_pkg: Argument 'pkg' is not a Package instance.")
+    assert(getmetatable(pkg) == rocksolver.Package, "manager.install_pkg: Argument 'pkg' is not a Package instance.")
     assert(type(pkg_dir) == "string" and path.isabs(pkg_dir), "manager.install_pkg: Argument 'pkg_dir' is not not an absolute path.")
     assert(type(deploy_dir) == "string" and path.isabs(deploy_dir), "manager.install_pkg: Argument 'deploy_dir' is not not an absolute path.")
     assert(type(variables) == "table", "manager.install_pkg: Argument 'variables' is not a table.")
@@ -113,7 +116,7 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
 
     local cmake_commands, err = r2cmake.process_rockspec(rockspec, pkg_dir)
     if not cmake_commands then
-        return nil, "Error installing: Cound not generate cmake commands for package" .. pkg .. ": " .. err, 503
+        return nil, "Error installing: Cound not generate cmake commands for package " .. pkg .. ": " .. err, 503
     end
 
     -- Build the package
@@ -124,15 +127,14 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
         return nil, err, status
     end
 
-    -- Table to collect installed files
-    pkg.files = {}
-
     local ok, status, stdout, stderr = pl.utils.executeex("cd " .. utils.quote(build_dir) .. " && " .. cfg.cmake .. " -P cmake_install.cmake")
 
     if not ok then
         return nil, "Error installing: Cound not install package " .. pkg .. " from directory '" .. build_dir .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr, 504
     end
 
+    -- Table to collect installed files
+    pkg.files = {}
     local install_mf = path.join(build_dir, "install_manifest.txt")
 
     -- Collect installed files
@@ -153,8 +155,8 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
 
     -- Cleanup
     if not cfg.debug then
-        path.rmdir(pkg_dir)
-        path.rmdir(build_dir)
+        dir.rmtree(pkg_dir)
+        dir.rmtree(build_dir)
     end
 
     return true

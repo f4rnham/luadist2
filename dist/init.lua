@@ -23,12 +23,14 @@ function install(package_names, deploy_dir, variables)
     assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
     deploy_dir = path.abspath(deploy_dir)
 
-    -- Find installed packages
+    -- Get installed packages
     local installed = mgr.get_installed(deploy_dir)
 
     -- Get manifest
     local manifest, err = mf.get_manifest()
-    if not manifest then return nil, "Error getting manifest: " .. err, 101 end
+    if not manifest then
+        return nil, "Error getting manifest: " .. err, 101
+    end
 
 
     local solver = DependencySolver(manifest, cfg.platform)
@@ -36,13 +38,15 @@ function install(package_names, deploy_dir, variables)
 
     for _, package_name in pairs(package_names) do
         -- Resolve dependencies
-        local curr_dependencies, err = solver:resolve_dependencies(package_name, installed)
+        local new_dependencies, err = solver:resolve_dependencies(package_name, installed)
 
-        if err then return nil, err, 102 end
+        if err then
+            return nil, err, 102
+        end
 
         -- Update dependencies to install with currently found ones and update installed packages
         -- for next dependency resolving as if previously found dependencies were already installed
-        for _, dependency in pairs(curr_dependencies) do
+        for _, dependency in pairs(new_dependencies) do
             dependencies[dependency] = dependency
             installed[dependency] = dependency
         end
@@ -50,12 +54,17 @@ function install(package_names, deploy_dir, variables)
 
     -- Fetch the packages from repository
     local dirs, err = downloader.fetch_pkgs(dependencies, path.join(deploy_dir, cfg.temp_dir), manifest.repo_path)
-    if not dirs then return nil, err end
+    if not dirs then
+        return nil, err
+    end
+
 
     -- Install fetched packages
     for pkg, dir in pairs(dirs) do
         ok, err = mgr.install_pkg(pkg, dir, deploy_dir, variables)
-        if not ok then return nil, err, 103 end
+        if not ok then
+            return nil, err, 103
+        end
     end
 
     return true
