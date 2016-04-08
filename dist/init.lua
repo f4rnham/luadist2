@@ -58,6 +58,9 @@ function install(package_names, deploy_dir, variables)
         return nil, err
     end
 
+    -- Get installed packages again, now we will modify and save them after each successful
+    -- package installation
+    local installed = mgr.get_installed(deploy_dir)
 
     -- Install fetched packages
     for pkg, dir in pairs(dirs) do
@@ -65,6 +68,10 @@ function install(package_names, deploy_dir, variables)
         if not ok then
             return nil, err, 103
         end
+
+        -- If installation was successful, update local manifest
+        table.insert(installed, pkg)
+        mgr.save_installed(deploy_dir, installed)
     end
 
     return true

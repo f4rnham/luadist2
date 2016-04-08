@@ -114,6 +114,8 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
         return nil, "Error installing: Cound not load rockspec for package " .. pkg .. " from " .. rockspec_file .. ": " .. err, 502
     end
 
+    pkg.spec = rockspec
+
     local cmake_commands, err = r2cmake.process_rockspec(rockspec, pkg_dir)
     if not cmake_commands then
         return nil, "Error installing: Cound not generate cmake commands for package " .. pkg .. ": " .. err, 503
@@ -138,20 +140,15 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
     local install_mf = path.join(build_dir, "install_manifest.txt")
 
     -- Collect installed files
-    if path.exists(install_mf) then
-        local mf, err = io.open(install_mf, "r")
-        if not mf then
-            return nil, "Error installing: Could not open CMake installation manifest '" .. install_mf .. "': " .. err, 302
-        end
-
-        for line in mf:lines() do
-            print("> " .. line)
-            --line = sys.check_separators(line)
-            --local file = line:gsub(utils.escape_magic(deploy_dir .. sys.path_separator()), "")
-            --table.insert(pkg.files, file)
-        end
-        mf:close()
+    local mf, err = io.open(install_mf, "r")
+    if not mf then
+        return nil, "Error installing: Could not open CMake installation manifest '" .. install_mf .. "': " .. err, 302
     end
+
+    for line in mf:lines() do
+        table.insert(pkg.files, line)
+    end
+    mf:close()
 
     -- Cleanup
     if not cfg.debug then
@@ -162,11 +159,35 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
     return true
 end
 
+function save_installed(deploy_dir, manifest)
+    assert(type(deploy_dir) == "string" and path.isabs(deploy_dir), "manager.save_installed: Argument 'deploy_dir' is not an absolute path.")
+    assert(type(manifest) == "table", "manager.save_installed: Argument 'manifest' is not a table.")
+
+    local manifest_file = path.join(deploy_dir, cfg.local_manifest_file)
+    return pl.pretty.dump(manifest, manifest_file)
+end
+
 -- Return manifest consisting of packages installed in specified deploy_dir directory
 function get_installed(deploy_dir)
-    local lua = {packages = {lua = {[cfg.lua_version] = {}}}}
+    assert(type(deploy_dir) == "string" and path.isabs(deploy_dir), "manager.get_installed: Argument 'deploy_dir' is not an absolute path.")
 
-    lua = rocksolver.utils.load_manifest(lua, true)
+    local manifest_file = path.join(deploy_dir, cfg.local_manifest_file)
+    local manifest, err = mf.load_manifest(manifest_file)
 
-    if true then return lua end
+    -- Assume no packages were installed, create default manifest with just lua
+    if not manifest then
+        manifest = {packages = {lua = {[cfg.lua_version] = {}}}}
+        manifest = rocksolver.utils.load_manifest(manifest, true)
+        save_installed(deploy_dir, manifest)
+        return manifest
+    end
+
+    -- Restore meta tables for loaded packages
+    for _, pkg in pairs(manifest) do
+        setmetatable(pkg, rocksolver.Package)
+        -- Re-parse version just to recreate meta table
+        pkg.version = rocksolver.const.parseVersion(pkg.version.string)
+    end
+
+    return manifest
 end

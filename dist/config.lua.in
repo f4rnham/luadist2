@@ -17,6 +17,7 @@ temp_dir      = path.join(root_dir, "tmp")
 -- Files -------------------------------------------------------------
 manifest_filename   = "manifest-file"
 log_file            = path.join(temp_dir, "luadist.log")
+local_manifest_file = path.join(root_dir, "share", manifest_filename)
 
 -- Repositories ------------------------------------------------------
 manifest_repos = {
