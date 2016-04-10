@@ -91,7 +91,11 @@ local function load_file(filename, load_fnc)
     if not str then
         return nil, err
     end
+
+    -- Remove "#!/usr/bin lua" like lines since they are not valid Lua
+    -- but seem to be present in rockspec files
     str = str:gsub("^#![^\n]*\n", "")
+    str = str:gsub("\n#![^\n]*\n", "")
     return load_fnc(str)
 end
 
