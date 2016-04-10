@@ -36,7 +36,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         luadist help <COMMAND>
         ]],
         run = function (deploy_dir, help_item)
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             help_item = help_item or {}
             assert(type(deploy_dir) == "string", "luadist.help: Argument 'deploy_dir' is not a string.")
             assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
@@ -75,7 +75,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, modules, cmake_variables)
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             if type(modules) == "string" then modules = {modules} end
             cmake_variables = cmake_variables or {}
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
@@ -126,7 +126,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
         run = function (deploy_dir, modules)
             error("NYI")
         --[[
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             if type(modules) == "string" then modules = {modules} end
             assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
@@ -163,7 +163,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
         run = function (deploy_dir, strings)
             error("NYI")
         --[[
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
@@ -200,7 +200,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
         run = function (deploy_dir, strings)
             error("NYI")
         --[[
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.search: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
@@ -246,7 +246,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
         run = function (deploy_dir, modules)
             error("NYI")
         --[[
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
@@ -328,7 +328,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, modules)
-            deploy_dir = deploy_dir or dist.get_deploy_dir()
+            deploy_dir = deploy_dir or cfg.root_dir
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
@@ -375,7 +375,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
 -- Run the functionality of LuaDist 'command' in the 'deploy_dir' with other items
 -- or settings/variables starting at 'other_idx' index of special variable 'arg'.
 local function run_command(deploy_dir, command, other_idx)
-    deploy_dir = deploy_dir or dist.get_deploy_dir()
+    deploy_dir = deploy_dir or cfg.root_dir
     assert(type(deploy_dir) == "string", "luadist.run_command: Argument 'deploy_dir' is not a string.")
     assert(type(command) == "string", "luadist.run_command: Argument 'command' is not a string.")
     assert(not other_idx or type(other_idx) == "number", "luadist.run_command: Argument 'other_idx' is not a number.")
