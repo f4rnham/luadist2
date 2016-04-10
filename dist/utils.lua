@@ -2,7 +2,8 @@
 
 module ("dist.utils", package.seeall)
 
-local path = require "pl.path"
+local pl = require "pl.import_into"()
+
 
 -- Obtain LuaDist location by checking available package locations
 function get_luadist_location()
@@ -10,7 +11,7 @@ function get_luadist_location()
   package.path:gsub("([^;]+)", function(c) table.insert(paths, c) end)
 
   for _, curr_path in pairs(paths) do
-    if (path.isabs(curr_path) and curr_path:find("[/\\]lib[/\\]lua[/\\]%?.lua$")) then
+    if (pl.path.isabs(curr_path) and curr_path:find("[/\\]lib[/\\]lua[/\\]%?.lua$")) then
       -- Remove path to lib/lua
       curr_path = curr_path:gsub("[/\\]lib[/\\]lua[/\\]%?.lua$", "")
       -- Clean the path up a bit
@@ -27,13 +28,13 @@ function quote(argument)
     assert(type(argument) == "string", "utils.quote: Argument 'argument' is not a string.")
 
     -- replace '/' path separators for '\' on Windows
-    if path.is_windows and argument:match("^[%u%U.]?:?[/\\].*") then
+    if pl.path.is_windows and argument:match("^[%u%U.]?:?[/\\].*") then
         argument = argument:gsub("//","\\"):gsub("/","\\")
     end
 
     -- Windows doesn't recognize paths starting with two slashes or backslashes
     -- so we double every backslash except for the first one
-    if path.is_windows and argument:match("^[/\\].*") then
+    if pl.path.is_windows and argument:match("^[/\\].*") then
         local prefix = argument:sub(1,1)
         argument = argument:sub(2):gsub("\\",  "\\\\")
         argument = prefix .. argument

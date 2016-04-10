@@ -9,9 +9,9 @@ local mf = require "dist.manifest"
 local utils = require "dist.utils"
 local mgr = require "dist.manager"
 local downloader = require "dist.downloader"
-
-local path = require "pl.path"
+local pl = require "pl.import_into"()
 local DependencySolver = require "rocksolver.DependencySolver"
+
 
 -- Installs 'package_names' to 'deploy_dir', using optional CMake 'variables'.
 function install(package_names, deploy_dir, variables)
@@ -21,7 +21,7 @@ function install(package_names, deploy_dir, variables)
 
     assert(type(package_names) == "table", "dist.install: Argument 'package_names' is not a table or string.")
     assert(type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
-    deploy_dir = path.abspath(deploy_dir)
+    deploy_dir = pl.path.abspath(deploy_dir)
 
     -- Get installed packages
     local installed = mgr.get_installed(deploy_dir)
@@ -53,7 +53,7 @@ function install(package_names, deploy_dir, variables)
     end
 
     -- Fetch the packages from repository
-    local dirs, err = downloader.fetch_pkgs(dependencies, path.join(deploy_dir, cfg.temp_dir), manifest.repo_path)
+    local dirs, err = downloader.fetch_pkgs(dependencies, pl.path.join(deploy_dir, cfg.temp_dir), manifest.repo_path)
     if not dirs then
         return nil, err
     end

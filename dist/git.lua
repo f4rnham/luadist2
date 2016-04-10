@@ -5,16 +5,14 @@ module ("dist.git", package.seeall)
 require "git"
 local cfg = require "dist.config"
 local utils = require "dist.utils"
-local path = require "pl.path"
-local dir = require "pl.dir"
-local pl_utils = require "pl.utils"
+local pl = require "pl.import_into"()
 
 
 -- Clone the repository from url to dest_dir
 function clone(repository_url, dest_dir, depth, branch)
     assert(type(repository_url) == "string", "git.clone: Argument 'repository_url' is not a string.")
     assert(type(dest_dir) == "string", "git.clone: Argument 'dest_dir' is not a string.")
-    dest_dir = path.abspath(dest_dir)
+    dest_dir = pl.path.abspath(dest_dir)
 
     local command = "git clone " .. repository_url
 
@@ -29,19 +27,19 @@ function clone(repository_url, dest_dir, depth, branch)
     end
 
     command = command .. " " .. utils.quote(dest_dir)
-    if path.exists(dest_dir) then dir.rmtree(dest_dir) end
-    path.mkdir(dest_dir)
+    if pl.path.exists(dest_dir) then pl.dir.rmtree(dest_dir) end
+    pl.path.mkdir(dest_dir)
 
     -- change the current working directory to dest_dir
-    local prev_current_dir = path.currentdir()
-    path.chdir(dest_dir)
+    local prev_current_dir = pl.path.currentdir()
+    pl.path.chdir(dest_dir)
 
     -- execute git clone
     if not cfg.debug then command = command .. " -q " end
-    local ok, err = pl_utils.execute(command)
+    local ok, err = pl.utils.execute(command)
 
     -- change the current working directory back
-    path.chdir(prev_current_dir)
+    pl.path.chdir(prev_current_dir)
 
     return ok, err
 end
@@ -78,12 +76,12 @@ end
 
 -- Checkout specified ref in specified git_repo_dir
 function checkout_ref(ref, git_repo_dir, orphaned)
-    git_repo_dir = git_repo_dir or path.currentdir()
+    git_repo_dir = git_repo_dir or pl.path.currentdir()
     orphaned = orphaned or false
     assert(type(ref) == "string", "git.checkout_ref: Argument 'ref' is not a string.")
     assert(type(git_repo_dir) == "string", "git.checkout_ref: Argument 'git_repo_dir' is not a string.")
     assert(type(orphaned) == "boolean", "git.checkout_ref: Argument 'orphaned' is not a boolean.")
-    git_repo_dir = path.abspath(git_repo_dir)
+    git_repo_dir = pl.path.abspath(git_repo_dir)
 
     local command = "git checkout "
     if orphaned then command = command .. " --orphan " end
@@ -91,13 +89,13 @@ function checkout_ref(ref, git_repo_dir, orphaned)
     if not cfg.debug then command = command .. " -q " end
 
     local ok, err
-    if git_repo_dir ~= path.currentdir() then
-        local prev_current_dir = path.currentdir()
-        path.chdir(git_repo_dir)
-        ok, err = pl_utils.execute(command)
-        path.chdir(prev_current_dir)
+    if git_repo_dir ~= pl.path.currentdir() then
+        local prev_current_dir = pl.path.currentdir()
+        pl.path.chdir(git_repo_dir)
+        ok, err = pl.utils.execute(command)
+        pl.path.chdir(prev_current_dir)
     else
-        ok, err = pl_utils.execute(command)
+        ok, err = pl.utils.execute(command)
     end
 
     return ok, err
@@ -105,16 +103,16 @@ end
 
 -- Checkout specified sha in specified git_repo_dir
 function checkout_sha(sha, git_repo_dir)
-    git_repo_dir = git_repo_dir or path.currentdir()
+    git_repo_dir = git_repo_dir or pl.path.currentdir()
     assert(type(sha) == "string", "git.checkout_sha: Argument 'sha' is not a string.")
     assert(type(git_repo_dir) == "string", "git.checkout_sha: Argument 'git_repo_dir' is not a string.")
-    git_repo_dir = path.abspath(git_repo_dir)
+    git_repo_dir = pl.path.abspath(git_repo_dir)
 
     local dir_changed, prev_current_dir
 
-    if git_repo_dir ~= path.currentdir() then
-        prev_current_dir = path.currentdir()
-        path.chdir(git_repo_dir)
+    if git_repo_dir ~= pl.path.currentdir() then
+        prev_current_dir = pl.path.currentdir()
+        pl.path.chdir(git_repo_dir)
         dir_changed = true
     end
 
@@ -126,40 +124,40 @@ function checkout_sha(sha, git_repo_dir)
     if not ok then return nil, "Error when checking out the sha '" .. sha .. "' in the git repository '" .. git_repo_dir .. "': " .. err end
 
     repo_or_err:close()
-    if dir_changed then path.chdir(prev_current_dir) end
+    if dir_changed then pl.path.chdir(prev_current_dir) end
 
     return true
 end
 
 -- Create an empty git repository in given directory.
 function init(dir)
-    dir = dir or path.currentdir()
+    dir = dir or pl.path.currentdir()
     assert(type(dir) == "string", "git.init: Argument 'dir' is not a string.")
-    dir = path.abspath(dir)
+    dir = pl.path.abspath(dir)
 
     -- create the 'dir' first, since it causes 'git init' to fail on Windows
     -- when the parent directory of 'dir' doesn't exist
-    local ok, err = path.mkdir(dir)
+    local ok, err = pl.path.mkdir(dir)
     if not ok then return nil, err end
 
     local command = "git init " .. utils.quote(dir)
     if not cfg.debug then command = command .. " -q " end
-    return pl_utils.execute(command)
+    return pl.utils.execute(command)
 end
 
 -- Add all files in the 'repo_dir' to the git index. The 'repo_dir' must be
 -- in the initialized git repository.
 function add_all(repo_dir)
-    repo_dir = repo_dir or path.currentdir()
+    repo_dir = repo_dir or pl.path.currentdir()
     assert(type(repo_dir) == "string", "git.add_all: Argument 'repo_dir' is not a string.")
-    repo_dir = path.abspath(repo_dir)
+    repo_dir = pl.path.abspath(repo_dir)
 
     local ok, prev_dir, msg
-    ok, prev_dir = path.chdir(repo_dir);
+    ok, prev_dir = pl.path.chdir(repo_dir);
     if not ok then return nil, err end
 
-    ok, msg = pl_utils.execute("git add -A -f " .. utils.quote(repo_dir))
-    path.chdir(prev_dir)
+    ok, msg = pl.utils.execute("git add -A -f " .. utils.quote(repo_dir))
+    pl.path.chdir(prev_dir)
 
     return ok, msg
 end
@@ -167,20 +165,20 @@ end
 -- Commit all indexed files in 'repo_dir' with the given commit 'message'.
 -- The 'repo_dir' must be in the initialized git repository.
 function commit(message, repo_dir)
-    repo_dir = repo_dir or path.currentdir()
+    repo_dir = repo_dir or pl.path.currentdir()
     message = message or "commit by luadist-git"
     assert(type(message) == "string", "git.commit: Argument 'message' is not a string.")
     assert(type(repo_dir) == "string", "git.commit: Argument 'repo_dir' is not a string.")
-    repo_dir = path.abspath(repo_dir)
+    repo_dir = pl.path.abspath(repo_dir)
 
     local ok, prev_dir, msg
-    ok, prev_dir = path.chdir(repo_dir);
+    ok, prev_dir = pl.path.chdir(repo_dir);
     if not ok then return nil, err end
 
     local command = "git commit -m " .. utils.quote(message)
     if not cfg.debug then command = command .. " -q " end
-    ok, msg = pl_utils.execute(command)
-    path.chdir(prev_dir)
+    ok, msg = pl.utils.execute(command)
+    pl.path.chdir(prev_dir)
 
     return ok, msg
 end
@@ -190,18 +188,18 @@ end
 -- in the initialized git repository and the branch 'new_name' must
 -- not already exist in that repository.
 function rename_branch(old_name, new_name, repo_dir)
-    repo_dir = repo_dir or path.currentdir()
+    repo_dir = repo_dir or pl.path.currentdir()
     assert(type(old_name) == "string", "git.rename_branch: Argument 'old_name' is not a string.")
     assert(type(new_name) == "string", "git.rename_branch: Argument 'new_name' is not a string.")
     assert(type(repo_dir) == "string", "git.rename_branch: Argument 'repo_dir' is not a string.")
-    repo_dir = path.abspath(repo_dir)
+    repo_dir = pl.path.abspath(repo_dir)
 
     local ok, prev_dir, msg
-    ok, prev_dir = path.chdir(repo_dir);
+    ok, prev_dir = pl.path.chdir(repo_dir);
     if not ok then return nil, err end
 
-    ok, msg = pl_utils.execute("git branch -m " .. old_name .. " " .. new_name)
-    path.chdir(prev_dir)
+    ok, msg = pl.utils.execute("git branch -m " .. old_name .. " " .. new_name)
+    pl.path.chdir(prev_dir)
 
     return ok, msg
 end
@@ -212,7 +210,7 @@ end
 -- If 'delete' is set to 'true' then the explicitly given remote ref
 -- will be deleted, not pushed.
 function push_ref(repo_dir, ref_name, git_repo_url, all_tags, delete)
-    repo_dir = repo_dir or path.currentdir()
+    repo_dir = repo_dir or pl.path.currentdir()
     all_tags = all_tags or false
     delete = delete or false
     assert(type(repo_dir) == "string", "git.push_ref: Argument 'repo_dir' is not a string.")
@@ -220,10 +218,10 @@ function push_ref(repo_dir, ref_name, git_repo_url, all_tags, delete)
     assert(type(ref_name) == "string", "git.push_ref: Argument 'ref_name' is not a string.")
     assert(type(all_tags) == "boolean", "git.push_ref: Argument 'all_tags' is not a boolean.")
     assert(type(delete) == "boolean", "git.push_ref: Argument 'delete' is not a boolean.")
-    repo_dir = path.abspath(repo_dir)
+    repo_dir = pl.path.abspath(repo_dir)
 
     local ok, prev_dir, msg
-    ok, prev_dir = path.chdir(repo_dir);
+    ok, prev_dir = pl.path.chdir(repo_dir);
     if not ok then return nil, err end
 
     local command = "git push " .. git_repo_url
@@ -232,8 +230,8 @@ function push_ref(repo_dir, ref_name, git_repo_url, all_tags, delete)
     command = command .. " " .. ref_name .. " -f "
     if not cfg.debug then command = command .. " -q " end
 
-    ok, msg = pl_utils.execute(command)
-    path.chdir(prev_dir)
+    ok, msg = pl.utils.execute(command)
+    pl.path.chdir(prev_dir)
 
     return ok, msg
 end
@@ -241,17 +239,17 @@ end
 -- Creates the tag 'tag_name' in given 'repo_dir', which must be
 -- in the initialized git repository
 function create_tag(repo_dir, tag_name)
-    repo_dir = repo_dir or path.currentdir()
+    repo_dir = repo_dir or pl.path.currentdir()
     assert(type(repo_dir) == "string", "git.create_tag: Argument 'repo_dir' is not a string.")
     assert(type(tag_name) == "string", "git.create_tag: Argument 'tag_name' is not a string.")
-    repo_dir = path.abspath(repo_dir)
+    repo_dir = pl.path.abspath(repo_dir)
 
     local ok, prev_dir, msg
-    ok, prev_dir = path.chdir(repo_dir);
+    ok, prev_dir = pl.path.chdir(repo_dir);
     if not ok then return nil, err end
 
-    ok, msg = pl_utils.execute("git tag " .. tag_name .. " -f ")
-    path.chdir(prev_dir)
+    ok, msg = pl.utils.execute("git tag " .. tag_name .. " -f ")
+    pl.path.chdir(prev_dir)
 
     return ok, msg
 end
@@ -259,13 +257,13 @@ end
 -- Fetch given 'ref_name' from the remote 'git_repo_url' to the local repository
 -- 'repo_dir' and return its sha. 'ref_type' can be "tag" or "head".
 local function fetch_ref(repo_dir, git_repo_url, ref_name, ref_type)
-    repo_dir = repo_dir or path.currentdir()
+    repo_dir = repo_dir or pl.path.currentdir()
     assert(type(repo_dir) == "string", "git.fetch_ref: Argument 'repo_dir' is not a string.")
     assert(type(git_repo_url) == "string", "git.fetch_ref: Argument 'git_repo_url' is not a string.")
     assert(type(ref_name) == "string", "git.fetch_ref: Argument 'ref_name' is not a string.")
     assert(type(ref_type) == "string", "git.fetch_ref: Argument 'ref_type' is not a string.")
     assert(ref_type == "tag" or ref_type == "head", "git.get_remote_refs: Argument 'ref_type' is not \"tag\" or \"head\".")
-    repo_dir = path.abspath(repo_dir)
+    repo_dir = pl.path.abspath(repo_dir)
 
     local refstring = "refs/" .. ref_type .. "s/" .. ref_name
 
@@ -299,7 +297,7 @@ end
 function create_repo(dir)
     assert(type(dir) == "string", "git.create_repo: Argument 'dir' is not a string.")
 
-    if path.exists(dir) then dir.rmtree(dir) end
+    if pl.path.exists(dir) then pl.dir.rmtree(dir) end
 
     local ok, repo_or_err = pcall(git.repo.create, dir)
     if not ok then return nil, "Error when creating the git repository '" .. dir .. "': " .. repo_or_err end

@@ -5,9 +5,8 @@ module ("dist.manifest", package.seeall)
 local cfg = require "dist.config"
 local git = require "dist.git"
 local utils = require "dist.utils"
-local pretty = require "pl.pretty"
-local path = require "pl.path"
-local dir = require "pl.dir"
+local pl = require "pl.import_into"()
+
 
 -- Return the joined manifest table from 'cfg.manifest_repos' locations
 local manifest = nil
@@ -30,7 +29,7 @@ function download_manifest(manifest_urls)
 
     assert(type(manifest_urls) == "table", "manifest.download_manifest: Argument 'manifest_urls' is not a table or string.")
 
-    local temp_dir = path.join(cfg.root_dir, cfg.temp_dir)
+    local temp_dir = pl.path.join(cfg.root_dir, cfg.temp_dir)
 
     -- Retrieve manifests from repositories and collect them into one manifest table
     local manifest = {repo_path = {}, packages = {}}
@@ -39,7 +38,7 @@ function download_manifest(manifest_urls)
 
     print("Downloading manifest information...")
     for k, repo in pairs(manifest_urls) do
-        local clone_dir = path.join(temp_dir, "manifest_" .. tostring(k))
+        local clone_dir = pl.path.join(temp_dir, "manifest_" .. tostring(k))
 
         -- Clone the repo and add its 'manifest-file' file to the manifest table
         ok, err = git.create_repo(clone_dir)
@@ -50,12 +49,12 @@ function download_manifest(manifest_urls)
 
         if not (ok and sha) then
             if not cfg.debug then
-                dir.rmtree(clone_dir)
+                pl.dir.rmtree(clone_dir)
             end
 
             return nil, "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
         else
-            local manifest_file = path.join(clone_dir, cfg.manifest_filename)
+            local manifest_file = pl.path.join(clone_dir, cfg.manifest_filename)
             local current_manifest = load_manifest(manifest_file)
 
             for pkg, info in pairs(current_manifest.packages) do
@@ -68,13 +67,13 @@ function download_manifest(manifest_urls)
             table.insert(manifest.repo_path, current_manifest.repo_path)
         end
         if not cfg.debug then
-            dir.rmtree(clone_dir)
+            pl.dir.rmtree(clone_dir)
         end
     end
 
     -- Save the new manifest table to file for debug purposes
     if cfg.debug then
-        pretty.dump(manifest, path.join(temp_dir, cfg.manifest_filename))
+        pl.pretty.dump(manifest, pl.path.join(temp_dir, cfg.manifest_filename))
     end
 
     return manifest
@@ -99,11 +98,11 @@ end
 -- Load and return manifest table from the manifest file,
 -- if manifest file is not present, return nil.
 function load_manifest(manifest_file)
-    return load_file(manifest_file, pretty.read)
+    return load_file(manifest_file, pl.pretty.read)
 end
 
 -- Load and return rockspec table from the rockspec file,
 -- if rockspec file is not present, return nil.
 function load_rockspec(rockspec_file)
-    return load_file(rockspec_file, pretty.load)
+    return load_file(rockspec_file, pl.pretty.load)
 end

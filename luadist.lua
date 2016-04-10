@@ -6,11 +6,11 @@ local dist = require "dist"
 local utils = require "dist.utils"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
-local path = require "pl.path"
-
+local pl = require "pl.import_into"()
 local rocksolver = {}
 rocksolver.DependencySolver = require "rocksolver.DependencySolver"
 rocksolver.utils = require "rocksolver.utils"
+
 
 -- CLI commands of Luadist.
 local commands
@@ -40,7 +40,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
             help_item = help_item or {}
             assert(type(deploy_dir) == "string", "luadist.help: Argument 'deploy_dir' is not a string.")
             assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             if not help_item or not commands[help_item[1]] then
                 help_item = "help"
@@ -81,7 +81,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
             assert(type(cmake_variables) == "table", "luadist.install: Argument 'cmake_variables' is not a table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             if #modules == 0 then
                 print("No modules to install specified.")
@@ -130,7 +130,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
             if type(modules) == "string" then modules = {modules} end
             assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             local num, err = dist.remove(modules, deploy_dir)
             if not num then
@@ -167,7 +167,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             local deployed = dist.get_deployed(deploy_dir)
             deployed  = depends.filter_packages_by_strings(deployed, strings)
@@ -204,7 +204,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
             strings = strings or {}
             assert(type(deploy_dir) == "string", "luadist.search: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             local available, err = mf.get_manifest()
             if not available then
@@ -250,7 +250,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             local manifest, err = mf.get_manifest()
             if not manifest then
@@ -332,7 +332,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.info: Argument 'modules' is not a table.")
-            deploy_dir = path.abspath(deploy_dir)
+            deploy_dir = pl.path.abspath(deploy_dir)
 
             local manifest, err = mf.get_manifest()
             if not manifest then
@@ -379,7 +379,7 @@ local function run_command(deploy_dir, command, other_idx)
     assert(type(deploy_dir) == "string", "luadist.run_command: Argument 'deploy_dir' is not a string.")
     assert(type(command) == "string", "luadist.run_command: Argument 'command' is not a string.")
     assert(not other_idx or type(other_idx) == "number", "luadist.run_command: Argument 'other_idx' is not a number.")
-    deploy_dir = path.abspath(deploy_dir)
+    deploy_dir = pl.path.abspath(deploy_dir)
 
     local items = {}
     local cmake_variables = {}
@@ -411,7 +411,7 @@ local function run_command(deploy_dir, command, other_idx)
     end
 
     -- run the required LuaDist functionality
-    return commands[command].run(path.abspath(deploy_dir), items, cmake_variables)
+    return commands[command].run(pl.path.abspath(deploy_dir), items, cmake_variables)
 end
 
 -- Print information about Luadist (version, license, etc.).

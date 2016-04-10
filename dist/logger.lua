@@ -3,15 +3,16 @@
 module ("dist.logger", package.seeall)
 
 local cfg = require "dist.config"
-local path = require "pl.path"
+local pl = require "pl.import_into"()
+
 
 -- Open 'log_file' and return a log, or nil and error msg on error.
 local function get_log(log_file)
     log_file = log_file or cfg.log_file
     assert(type(log_file) == "string", "log.get_log: Argument 'log_file' is not a string.")
-    log_file = path.abspath(log_file)
+    log_file = pl.path.abspath(log_file)
 
-    path.mkdir(path.dirname(log_file))
+    pl.path.mkdir(pl.path.dirname(log_file))
     local log, err = io.open(log_file, "a")
     if not log then
         return nil, "Error: can't open a logfile '" .. log_file .. "': " .. err
