@@ -2,6 +2,7 @@
 
 module ("dist.manifest", package.seeall)
 
+local log = require "dist.log".logger
 local cfg = require "dist.config"
 local git = require "dist.git"
 local utils = require "dist.utils"

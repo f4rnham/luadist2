@@ -34,7 +34,7 @@ debug         = false         -- Use debug mode (mainly does not clean cache).
 print_log_level = logging.INFO
 -- Minimum level for log messages to be logged (nil to disable).
 write_log_level = logging.INFO
-log_file = path.join(share_dir, "luadist.log")
+log_file = pl.path.join(share_dir, "luadist.log")
 
 -- CMake variables ---------------------------------------------------
 variables = {

@@ -2,7 +2,7 @@
 
 module ("dist", package.seeall)
 
-local log = require "dist.log"
+local log = require "dist.log".logger
 local cfg = require "dist.config"
 local git = require "dist.git"
 local mf = require "dist.manifest"
@@ -61,7 +61,7 @@ local function _install(package_names, variables)
 
         -- If installation was successful, update local manifest
         table.insert(installed, pkg)
-        mgr.save_installed(deploy_dir, installed)
+        mgr.save_installed(installed)
     end
 end
 

@@ -1,5 +1,3 @@
-module("dist.log", package.seeall)
-
 local cfg = require "dist.config"
 local logging = require "logging"
 require "logging.file"
@@ -12,13 +10,13 @@ function reload_config()
     logger_console = logging.console("%level %message\n")
     logger_file = logging.file(cfg.log_file_abs)
 
-    if cfg.logging.print_log_level then
+    if cfg.print_log_level then
         logger_console:setLevel(cfg.print_log_level)
     else
         logger_console = nil
     end
 
-    if cfg.logging.write_log_level then
+    if cfg.write_log_level then
         logger_file:setLevel(cfg.write_log_level)
     else
         logger_file = nil
@@ -40,4 +38,4 @@ function(self, level, message)
     return true
 end)
 
-return logger
+return {logger = logger, reload_config = reload_config}

@@ -1,6 +1,6 @@
 module ("dist.downloader", package.seeall)
 
-local log = require "dist.log"
+local log = require "dist.log".logger
 local cfg = require "dist.config"
 local git = require "dist.git"
 local pl = require "pl.import_into"()

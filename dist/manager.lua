@@ -1,6 +1,6 @@
 module ("dist.manager", package.seeall)
 
-local log = require "dist.log"
+local log = require "dist.log".logger
 local cfg = require "dist.config"
 local mf = require "dist.manifest"
 local utils = require "dist.utils"
@@ -188,7 +188,7 @@ function get_installed()
     if not manifest then
         manifest = {packages = {lua = {[cfg.lua_version] = {}}}}
         manifest = rocksolver.utils.load_manifest(manifest, true)
-        save_installed(cfg.local_manifest_file_abs, manifest)
+        save_installed(manifest)
         return manifest
     end
 
