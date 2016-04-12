@@ -5,20 +5,27 @@ local logging = require "logging"
 require "logging.file"
 require "logging.console"
 
-local logger_console = logging.console("%level %message\n")
-local logger_file = logging.file(cfg.logging.file)
+local logger_console
+local logger_file
 
-if cfg.logging.print_log_level then
-    logger_console:setLevel(cfg.logging.print_log_level)
-else
-    logger_console = nil
+function reload_config()
+    logger_console = logging.console("%level %message\n")
+    logger_file = logging.file(cfg.log_file_abs)
+
+    if cfg.logging.print_log_level then
+        logger_console:setLevel(cfg.print_log_level)
+    else
+        logger_console = nil
+    end
+
+    if cfg.logging.write_log_level then
+        logger_file:setLevel(cfg.write_log_level)
+    else
+        logger_file = nil
+    end
 end
 
-if cfg.logging.write_log_level then
-    logger_file:setLevel(cfg.logging.write_log_level)
-else
-    logger_file = nil
-end
+reload_config()
 
 local logger = logging.new(
 function(self, level, message)

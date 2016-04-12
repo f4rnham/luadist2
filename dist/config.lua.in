@@ -2,25 +2,24 @@
 
 module ("dist.config", package.seeall)
 
-local log = require "logging"
+local logging = require "logging"
 local utils = require "dist.utils"
+local log = require "dist.log"
 local pl = require "pl.import_into"()
-
 
 -- System information ------------------------------------------------
 version       = "@DIST_VERSION@"   -- Current LuaDist version
 platform      = {"unix", "linux"}
 lua_version   = _VERSION:gsub("Lua ", "")
 
--- Directories -------------------------------------------------------
-root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or pl.path.sep -- Should be always absolute (is it?) FIXME
-temp_dir      = pl.path.join(root_dir, "tmp")
+-- Directories (relative to root_dir) --------------------------------
+root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or pl.path.sep
+temp_dir      = "tmp"
 share_dir     = pl.path.join("share", "LuaDist")
 
 -- Manifest information ----------------------------------------------
 manifest_filename   = "manifest-file"
-log_file            = pl.path.join(temp_dir, "luadist.log")
-local_manifest_file = pl.path.join(root_dir, "share", manifest_filename)
+local_manifest_file = pl.path.join(share_dir, manifest_filename)
 
 -- Repositories ------------------------------------------------------
 manifest_repos = {
@@ -31,12 +30,11 @@ manifest_repos = {
 debug         = false         -- Use debug mode (mainly does not clean cache).
 
 -- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL
-logging = {}
 -- Minimum level for log messages to be printed (nil to disable).
-logging.print_log_level = log.INFO
+print_log_level = logging.INFO
 -- Minimum level for log messages to be logged (nil to disable).
-logging.write_log_level = log.INFO
-logging.file = path.join(share_dir, "luadist.log")
+write_log_level = logging.INFO
+log_file = path.join(share_dir, "luadist.log")
 
 -- CMake variables ---------------------------------------------------
 variables = {
@@ -74,3 +72,22 @@ end
 if (variables.CMAKE_GENERATOR == "MinGW Makefiles") then
         build_command = "set SHELL=cmd.exe && " .. build_command .. " -- -j"
 end
+
+-- Update all root directory related variables, only these ones should be used in code
+function update_root_dir(dir)
+    old_root_dir            = root_dir_abs
+
+    root_dir_abs            = pl.path.abspath(dir)
+    temp_dir_abs            = pl.path.join(root_dir_abs, temp_dir)
+    share_dir_abs           = pl.path.join(root_dir_abs, share_dir)
+    local_manifest_file_abs = pl.path.join(root_dir_abs, local_manifest_file)
+    log_file_abs            = pl.path.join(root_dir_abs, log_file)
+    log.reload_config()
+end
+
+-- Function used when exitting from functions which allow to specify deploy directory
+function revert_root_dir()
+    update_root_dir(old_root_dir)
+end
+
+update_root_dir(root_dir)

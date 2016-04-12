@@ -64,14 +64,12 @@ function build_pkg(src_dir, build_dir, variables)
     return true
 end
 
--- Installs package 'pkg' from 'pkg_dir' to 'deploy_dir', using optional CMake 'variables'.
-function install_pkg(pkg, pkg_dir, deploy_dir, variables)
-    deploy_dir = deploy_dir or cfg.root_dir
+-- Installs package 'pkg' from 'pkg_dir' using optional CMake 'variables'.
+function install_pkg(pkg, pkg_dir, variables)
     variables = variables or {}
 
     assert(getmetatable(pkg) == rocksolver.Package, "manager.install_pkg: Argument 'pkg' is not a Package instance.")
     assert(type(pkg_dir) == "string" and pl.path.isabs(pkg_dir), "manager.install_pkg: Argument 'pkg_dir' is not not an absolute path.")
-    assert(type(deploy_dir) == "string" and pl.path.isabs(deploy_dir), "manager.install_pkg: Argument 'deploy_dir' is not not an absolute path.")
     assert(type(variables) == "table", "manager.install_pkg: Argument 'variables' is not a table.")
 
     local rockspec_file = pl.path.join(pkg_dir, pkg.name .. "-" .. tostring(pkg.version) .. ".rockspec")
@@ -79,7 +77,7 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
     -- Check if we have cmake
     -- FIXME reintroduce in other place?
     -- ok = utils.system_dependency_available("cmake", "cmake --version")
-    -- if not ok then return nil, "Error when installing: Command 'cmake' not available on the system.", 503 end
+    -- if not ok then return nil, "Error when installing: Command 'cmake' not available on the system.", 50X end
 
     -- Set cmake variables
     local cmake_variables = {}
@@ -94,11 +92,11 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
         cmake_variables[k] = v
     end
 
-    cmake_variables.CMAKE_INCLUDE_PATH = table.concat({cmake_variables.CMAKE_INCLUDE_PATH or "", pl.path.join(deploy_dir, "include")}, ";")
-    cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", pl.path.join(deploy_dir, "lib"), pl.path.join(deploy_dir, "bin")}, ";")
-    cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", pl.path.join(deploy_dir, "bin")}, ";")
+    cmake_variables.CMAKE_INCLUDE_PATH = table.concat({cmake_variables.CMAKE_INCLUDE_PATH or "", pl.path.join(cfg.root_dir_abs, "include")}, ";")
+    cmake_variables.CMAKE_LIBRARY_PATH = table.concat({cmake_variables.CMAKE_LIBRARY_PATH or "", pl.path.join(cfg.root_dir_abs, "lib"), pl.path.join(cfg.root_dir_abs, "bin")}, ";")
+    cmake_variables.CMAKE_PROGRAM_PATH = table.concat({cmake_variables.CMAKE_PROGRAM_PATH or "", pl.path.join(cfg.root_dir_abs, "bin")}, ";")
 
-    cmake_variables.CMAKE_INSTALL_PREFIX = deploy_dir
+    cmake_variables.CMAKE_INSTALL_PREFIX = cfg.root_dir_abs
 
     -- Load rockspec file
     if not pl.path.exists(rockspec_file) then
@@ -118,7 +116,7 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
     end
 
     -- Build the package
-    local build_dir = pl.path.join(deploy_dir, cfg.temp_dir, pkg .. "-build")
+    local build_dir = pl.path.join(cfg.temp_dir_abs, pkg .. "-build")
     pl.path.mkdir(build_dir)
     local ok, err, status = build_pkg(pkg_dir, build_dir, cmake_variables)
     if not ok then
@@ -155,26 +153,21 @@ function install_pkg(pkg, pkg_dir, deploy_dir, variables)
     return true
 end
 
-function save_installed(deploy_dir, manifest)
-    assert(type(deploy_dir) == "string" and pl.path.isabs(deploy_dir), "manager.save_installed: Argument 'deploy_dir' is not an absolute path.")
+function save_installed(manifest)
     assert(type(manifest) == "table", "manager.save_installed: Argument 'manifest' is not a table.")
 
-    local manifest_file = pl.path.join(deploy_dir, cfg.local_manifest_file)
-    return pl.pretty.dump(manifest, manifest_file)
+    return pl.pretty.dump(manifest, cfg.local_manifest_file_abs)
 end
 
--- Return manifest consisting of packages installed in specified deploy_dir directory
-function get_installed(deploy_dir)
-    assert(type(deploy_dir) == "string" and pl.path.isabs(deploy_dir), "manager.get_installed: Argument 'deploy_dir' is not an absolute path.")
-
-    local manifest_file = pl.path.join(deploy_dir, cfg.local_manifest_file)
-    local manifest, err = mf.load_manifest(manifest_file)
+-- Return manifest consisting of installed packages
+function get_installed()
+    local manifest, err = mf.load_manifest(cfg.local_manifest_file_abs)
 
     -- Assume no packages were installed, create default manifest with just lua
     if not manifest then
         manifest = {packages = {lua = {[cfg.lua_version] = {}}}}
         manifest = rocksolver.utils.load_manifest(manifest, true)
-        save_installed(deploy_dir, manifest)
+        save_installed(cfg.local_manifest_file_abs, manifest)
         return manifest
     end
 

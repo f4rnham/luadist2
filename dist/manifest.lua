@@ -29,8 +29,6 @@ function download_manifest(manifest_urls)
 
     assert(type(manifest_urls) == "table", "manifest.download_manifest: Argument 'manifest_urls' is not a table or string.")
 
-    local temp_dir = pl.path.join(cfg.root_dir, cfg.temp_dir)
-
     -- Retrieve manifests from repositories and collect them into one manifest table
     local manifest = {repo_path = {}, packages = {}}
 
@@ -38,7 +36,7 @@ function download_manifest(manifest_urls)
 
     log:info("Downloading manifest information...")
     for k, repo in pairs(manifest_urls) do
-        local clone_dir = pl.path.join(temp_dir, "manifest_" .. tostring(k))
+        local clone_dir = pl.path.join(cfg.temp_dir_abs, "manifest_" .. tostring(k))
 
         -- Clone the repo and add its 'manifest-file' file to the manifest table
         ok, err = git.create_repo(clone_dir)
@@ -73,7 +71,7 @@ function download_manifest(manifest_urls)
 
     -- Save the new manifest table to file for debug purposes
     if cfg.debug then
-        pl.pretty.dump(manifest, pl.path.join(temp_dir, cfg.manifest_filename))
+        pl.pretty.dump(manifest, pl.path.join(cfg.temp_dir_abs, cfg.manifest_filename))
     end
 
     return manifest
