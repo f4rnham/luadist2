@@ -153,6 +153,27 @@ function install_pkg(pkg, pkg_dir, variables)
     return true
 end
 
+-- Remove package 'pkg'.
+function remove_pkg(pkg)
+    assert(getmetatable(pkg) == rocksolver.Package, "manager.remove_pkg: Argument 'pkg' is not a Package instance.")
+
+    if not pkg.files then
+        return nil, "Error removing package '" .. pkg .. "', specified package does not contain installation info"
+    end
+
+    -- Remove installed files
+    -- FIXME Remove implicitly created directories
+    for _, file in pairs(pkg.files) do
+        if pl.path.exists(file) then
+            pl.file.delete(file)
+        else
+            log:error("Error removing file '" .. file "', not found")
+        end
+    end
+
+    return true
+end
+
 function save_installed(manifest)
     assert(type(manifest) == "table", "manager.save_installed: Argument 'manifest' is not a table.")
 
