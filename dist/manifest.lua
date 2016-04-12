@@ -1,5 +1,3 @@
--- Working with manifest and dist.info files
-
 module ("dist.manifest", package.seeall)
 
 local log = require "dist.log".logger
@@ -16,7 +14,9 @@ function get_manifest()
     -- otherwise it is cached in memory until luadist is terminated
     if manifest == nil then
         manifest, err = download_manifest(cfg.manifest_repos)
-        if not manifest then return nil, "Error when downloading manifest: " .. err end
+        if not manifest then
+            return nil, "Error downloading manifest: " .. err
+        end
     end
 
     return manifest
@@ -33,7 +33,9 @@ function download_manifest(manifest_urls)
     -- Retrieve manifests from repositories and collect them into one manifest table
     local manifest = {repo_path = {}, packages = {}}
 
-    if #manifest_urls == 0 then return nil, "No manifest url specified." end
+    if #manifest_urls == 0 then
+        return nil, "No manifest url specified."
+    end
 
     log:info("Downloading manifest information...")
     for k, repo in pairs(manifest_urls) do
@@ -51,7 +53,7 @@ function download_manifest(manifest_urls)
                 pl.dir.rmtree(clone_dir)
             end
 
-            return nil, "Error when downloading the manifest from repository with url: '" .. repo .. "': " .. err
+            return nil, "Could not download manifest from repository with url: '" .. repo .. "': " .. err
         else
             local manifest_file = pl.path.join(clone_dir, cfg.manifest_filename)
             local current_manifest = load_manifest(manifest_file)

@@ -12,9 +12,8 @@ rocksolver.Package = require "rocksolver.Package"
 rocksolver.const = require "rocksolver.constraints"
 
 
--- Builds package from 'src_dir' to 'build_dir' using 'variables'.
--- Returns true on success or nil, error_message on error.
--- 'variables' is table of optional CMake variables.
+-- Builds package from 'src_dir' to 'build_dir' using CMake variables 'variables'
+-- Returns true on success or nil, error_message on error
 function build_pkg(src_dir, build_dir, variables)
     variables = variables or {}
 
@@ -25,7 +24,7 @@ function build_pkg(src_dir, build_dir, variables)
     -- Create cmake cache
     local cache_file = io.open(pl.path.join(build_dir, "cache.cmake"), "w")
     if not cache_file then
-        return nil, "Error creating CMake cache file in '" .. build_dir .. "'", 401
+        return nil, "Could not create CMake cache file in '" .. build_dir .. "'"
     end
 
     -- Fill in cache variables
@@ -35,7 +34,7 @@ function build_pkg(src_dir, build_dir, variables)
 
     cache_file:close()
 
-    log:info("Building " .. pl.path.basename(src_dir) .. "...")
+    log:info("Building '%s'", pl.path.basename(src_dir))
 
     -- Set cmake cache command
     local cache_command = cfg.cache_command
@@ -52,13 +51,13 @@ function build_pkg(src_dir, build_dir, variables)
     -- Set the cmake cache
     local ok, status, stdout, stderr = pl.utils.executeex("cd " .. utils.quote(build_dir) .. " && " .. cache_command .. " " .. utils.quote(src_dir))
     if not ok then
-        return nil, "Error preloading the CMake cache script '" .. pl.path.join(build_dir, "cmake.cache") .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr, 402
+        return nil, "Could not preload the CMake cache script '" .. pl.path.join(build_dir, "cmake.cache") .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr
     end
 
     -- Build with cmake
     local ok, status, stdout, stderr = pl.utils.executeex("cd " .. utils.quote(build_dir) .. " && " .. build_command)
     if not ok then
-        return nil, "Error building with CMake in directory '" .. build_dir .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr,403
+        return nil, "Could not build with CMake in directory '" .. build_dir .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr
     end
 
     return true
@@ -77,7 +76,7 @@ function install_pkg(pkg, pkg_dir, variables)
     -- Check if we have cmake
     -- FIXME reintroduce in other place?
     -- ok = utils.system_dependency_available("cmake", "cmake --version")
-    -- if not ok then return nil, "Error when installing: Command 'cmake' not available on the system.", 50X end
+    -- if not ok then return nil, "Error when installing: Command 'cmake' not available on the system." end
 
     -- Set cmake variables
     local cmake_variables = {}
@@ -100,33 +99,33 @@ function install_pkg(pkg, pkg_dir, variables)
 
     -- Load rockspec file
     if not pl.path.exists(rockspec_file) then
-        return nil, "Error installing: Could not find rockspec for package " .. pkg .. ", expected location: " .. rockspec_file, 501
+        return nil, "Could not find rockspec for package '" .. pkg .. "', expected location: '" .. rockspec_file .. "'"
     end
 
     local rockspec, err = mf.load_rockspec(rockspec_file)
     if not rockspec then
-        return nil, "Error installing: Cound not load rockspec for package " .. pkg .. " from " .. rockspec_file .. ": " .. err, 502
+        return nil, "Cound not load rockspec for package '" .. pkg .. "' from '" .. rockspec_file .. "': " .. err
     end
 
     pkg.spec = rockspec
 
     local cmake_commands, err = r2cmake.process_rockspec(rockspec, pkg_dir)
     if not cmake_commands then
-        return nil, "Error installing: Cound not generate cmake commands for package " .. pkg .. ": " .. err, 503
+        return nil, "Cound not generate cmake commands for package '" .. pkg .. "': " .. err
     end
 
     -- Build the package
     local build_dir = pl.path.join(cfg.temp_dir_abs, pkg .. "-build")
     pl.path.mkdir(build_dir)
-    local ok, err, status = build_pkg(pkg_dir, build_dir, cmake_variables)
+    local ok, err = build_pkg(pkg_dir, build_dir, cmake_variables)
     if not ok then
-        return nil, err, status
+        return nil, "Error building package: " .. err
     end
 
     local ok, status, stdout, stderr = pl.utils.executeex("cd " .. utils.quote(build_dir) .. " && " .. cfg.cmake .. " -P cmake_install.cmake")
 
     if not ok then
-        return nil, "Error installing: Cound not install package " .. pkg .. " from directory '" .. build_dir .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr, 504
+        return nil, "Cound not install package '" .. pkg .. "' from directory '" .. build_dir .. "'\nstdout:\n" .. stdout .. "\nstderr:\n" .. stderr
     end
 
     -- Table to collect installed files
@@ -136,7 +135,7 @@ function install_pkg(pkg, pkg_dir, variables)
     -- Collect installed files
     local mf, err = io.open(install_mf, "r")
     if not mf then
-        return nil, "Error installing: Could not open CMake installation manifest '" .. install_mf .. "': " .. err, 302
+        return nil, "Could not open CMake installation manifest '" .. install_mf .. "': " .. err
     end
 
     for line in mf:lines() do
@@ -158,7 +157,7 @@ function remove_pkg(pkg)
     assert(getmetatable(pkg) == rocksolver.Package, "manager.remove_pkg: Argument 'pkg' is not a Package instance.")
 
     if not pkg.files then
-        return nil, "Error removing package '" .. pkg .. "', specified package does not contain installation info"
+        return nil, "Could not remove package '" .. pkg .. "', specified package does not contain installation info"
     end
 
     -- Remove installed files
@@ -167,7 +166,7 @@ function remove_pkg(pkg)
         if pl.path.exists(file) then
             pl.file.delete(file)
         else
-            log:error("Error removing file '" .. file "', not found")
+            log:error("Error removing file '%s', not found", file)
         end
     end
 

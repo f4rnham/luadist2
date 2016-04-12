@@ -1,5 +1,3 @@
--- System functions
-
 module ("dist.utils", package.seeall)
 
 local pl = require "pl.import_into"()
@@ -23,7 +21,7 @@ function get_luadist_location()
   return nil
 end
 
--- Return string argument quoted for a command line usage.
+-- Return string argument quoted for a command line usage
 function quote(argument)
     assert(type(argument) == "string", "utils.quote: Argument 'argument' is not a string.")
 

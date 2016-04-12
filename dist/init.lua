@@ -1,4 +1,4 @@
--- main API of LuaDist
+-- Main API of LuaDist
 
 module ("dist", package.seeall)
 
@@ -20,7 +20,7 @@ local function _install(package_names, variables)
     -- Get manifest
     local manifest, err = mf.get_manifest()
     if not manifest then
-        return nil, "Error getting manifest: " .. err
+        return nil, err
     end
 
     local solver = DependencySolver(manifest, cfg.platform)
@@ -45,7 +45,7 @@ local function _install(package_names, variables)
     -- Fetch the packages from repository
     local dirs, err = downloader.fetch_pkgs(dependencies, cfg.temp_dir_abs, manifest.repo_path)
     if not dirs then
-        return nil, err
+        return nil, "Error downloading packages: " .. err
     end
 
     -- Get installed packages again, now we will modify and save them after each successful
@@ -56,13 +56,15 @@ local function _install(package_names, variables)
     for pkg, dir in pairs(dirs) do
         ok, err = mgr.install_pkg(pkg, dir, variables)
         if not ok then
-            return nil, err
+            return nil, "Error installing: " ..err
         end
 
         -- If installation was successful, update local manifest
         table.insert(installed, pkg)
         mgr.save_installed(installed)
     end
+
+    return true
 end
 
 -- Public wrapper for 'install' functionality, ensures correct setting of 'deploy_dir'
@@ -96,12 +98,12 @@ local function _remove(package_names)
         end
 
         if found_pkg == nil then
-            log:error("Could not remove package '" .. pkg_name .. "', no records of its installation were found")
+            log:error("Could not remove package '%s', no records of its installation were found", pkg_name)
             not_found = not_found + 1
         else
             ok, err = mgr.remove_pkg(found_pkg)
             if not ok then
-                return nil, err, 999
+                return nil, "Error removing: " .. err
             end
 
             -- If removal was successful, update local manifest
