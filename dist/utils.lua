@@ -66,6 +66,7 @@ function table_concat(tbl)
     return res
 end
 
+-- FIXME Delete or use logger
 -- Print elements of table in a structured way, for debugging only
 function print_table(tbl, indent)
   if not indent then indent = 0 end

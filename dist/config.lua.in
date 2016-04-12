@@ -2,6 +2,7 @@
 
 module ("dist.config", package.seeall)
 
+local log = require "logging"
 local utils = require "dist.utils"
 local pl = require "pl.import_into"()
 
@@ -14,8 +15,9 @@ lua_version   = _VERSION:gsub("Lua ", "")
 -- Directories -------------------------------------------------------
 root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or pl.path.sep -- Should be always absolute (is it?) FIXME
 temp_dir      = pl.path.join(root_dir, "tmp")
+share_dir     = pl.path.join("share", "LuaDist")
 
--- Files -------------------------------------------------------------
+-- Manifest information ----------------------------------------------
 manifest_filename   = "manifest-file"
 log_file            = pl.path.join(temp_dir, "luadist.log")
 local_manifest_file = pl.path.join(root_dir, "share", manifest_filename)
@@ -27,12 +29,14 @@ manifest_repos = {
 
 -- Settings ----------------------------------------------------------
 debug         = false         -- Use debug mode (mainly does not clean cache).
-verbose       = false         -- Print verbose output (does nothing?).
 
--- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL (see dist.logger for more information).
-print_log_level = "WARN"      -- Minimum level for log messages to be printed (nil to disable).
-write_log_level = "INFO"      -- Minimum level for log messages to be logged (nil to disable).
-
+-- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL
+logging = {}
+-- Minimum level for log messages to be printed (nil to disable).
+logging.print_log_level = log.INFO
+-- Minimum level for log messages to be logged (nil to disable).
+logging.write_log_level = log.INFO
+logging.file = path.join(share_dir, "luadist.log")
 
 -- CMake variables ---------------------------------------------------
 variables = {

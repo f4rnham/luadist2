@@ -3,6 +3,7 @@
 -- Command line interface to Luadist.
 
 local dist = require "dist"
+local log = require "dist.log"
 local utils = require "dist.utils"
 local mf = require "dist.manifest"
 local cfg = require "dist.config"
@@ -49,7 +50,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
             end
 
             print_info()
-            print(commands[help_item].help)
+            log:info(commands[help_item].help)
             return 0
         end
     },
@@ -84,16 +85,16 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
             deploy_dir = pl.path.abspath(deploy_dir)
 
             if #modules == 0 then
-                print("No modules to install specified.")
+                log:info("No modules to install specified.")
                 return 0
             end
 
             local ok, err = dist.install(modules, deploy_dir, cmake_variables)
             if not ok then
-                print(err)
+                log:error(err)
                 os.exit(1)
             else
-                print("Installation successful.")
+                log:info("Installation successful.")
                 return 0
             end
         end
@@ -134,10 +135,10 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
 
             local num, err = dist.remove(modules, deploy_dir)
             if not num then
-                print(err)
+                log:error(err)
                 os.exit(1)
             else
-               print("Removed modules: " .. num)
+               log:info("Removed modules: " .. num)
                return 0
             end
         ]]
@@ -172,12 +173,12 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
             local deployed = dist.get_deployed(deploy_dir)
             deployed  = depends.filter_packages_by_strings(deployed, strings)
 
-            print("\nInstalled modules:")
-            print("==================\n")
+            log:info("\nInstalled modules:")
+            log:info("==================\n")
             for _, pkg in pairs(deployed) do
-                print("  " .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
+                log:info("  " .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
             end
-            print()
+            log:info()
             return 0
         ]]
         end
@@ -208,19 +209,19 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
 
             local available, err = mf.get_manifest()
             if not available then
-                print(err)
+                log:error(err)
                 os.exit(1)
             end
 
             available = depends.filter_packages_by_strings(available, strings)
             available = depends.sort_by_names(available)
 
-            print("\nModules found:")
-            print("==============\n")
+            log:info("\nModules found:")
+            log:info("==============\n")
             for _, pkg in pairs(available) do
-                print("  " .. pkg.name)
+                log:info("  " .. pkg.name)
             end
-            print()
+            log:info()
             return 0
         ]]
         end
@@ -254,7 +255,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
 
             local manifest, err = mf.get_manifest()
             if not manifest then
-                print(err)
+                log:error(err)
                 os.exit(1)
             end
 
@@ -265,11 +266,11 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                 modules = depends.sort_by_names(modules)
                 local deployed = dist.get_deployed(deploy_dir)
 
-                print("")
+                log:info("")
                 for _, pkg in pairs(modules) do
-                    print("  " .. pkg.name)
-                    print("  Repository url: " .. (pkg.path or "N/A"))
-                    print()
+                    log:info("  " .. pkg.name)
+                    log:info("  Repository url: " .. (pkg.path or "N/A"))
+                    log:info()
                 end
                 return 0
 
@@ -277,7 +278,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
             else
 
                 if #modules > 5 then
-                    print("NOTE: More than 5 modules specified - operation may take a longer time.")
+                    log:info("NOTE: More than 5 modules specified - operation may take a longer time.")
                 end
 
                 local deployed = dist.get_deployed(deploy_dir)
@@ -285,7 +286,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                 for _, module in pairs(modules) do
                     manifest, err = package.get_versions_info(module, manifest, deploy_dir, deployed)
                     if not manifest then
-                        print(err)
+                        log:error(err)
                         os.exit(1)
                     end
                 end
@@ -293,20 +294,20 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                 modules = depends.find_packages(modules, manifest)
                 modules = depends.sort_by_names(modules)
 
-                print("")
+                log:info("")
                 for _, pkg in pairs(modules) do
-                    print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")" .. (pkg.from_installed and "  [info taken from installed version]" or ""))
-                    print("  Description: " .. (pkg.desc or "N/A"))
-                    print("  Author: " .. (pkg.author or "N/A"))
-                    print("  Homepage: " .. (pkg.url or "N/A"))
-                    print("  License: " .. (pkg.license or "N/A"))
-                    print("  Repository url: " .. (pkg.path or "N/A"))
-                    print("  Maintainer: " .. (pkg.maintainer or "N/A"))
-                    if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
-                    if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
-                    if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
-                    print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
-                    print()
+                    log:info("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")" .. (pkg.from_installed and "  [info taken from installed version]" or ""))
+                    log:info("  Description: " .. (pkg.desc or "N/A"))
+                    log:info("  Author: " .. (pkg.author or "N/A"))
+                    log:info("  Homepage: " .. (pkg.url or "N/A"))
+                    log:info("  License: " .. (pkg.license or "N/A"))
+                    log:info("  Repository url: " .. (pkg.path or "N/A"))
+                    log:info("  Maintainer: " .. (pkg.maintainer or "N/A"))
+                    if pkg.provides then log:info("  Provides: " .. utils.table_tostring(pkg.provides)) end
+                    if pkg.depends then log:info("  Depends: " .. utils.table_tostring(pkg.depends)) end
+                    if pkg.conflicts then log:info("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
+                    log:info("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
+                    log:info()
                 end
                 return 0
             end
@@ -336,7 +337,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
 
             local manifest, err = mf.get_manifest()
             if not manifest then
-                print(err)
+                log:error(err)
                 os.exit(1)
             end
 
@@ -354,16 +355,16 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
 
                 local dependencies, err = solver:resolve_dependencies(module, installed)
                 if not dependencies then
-                    print(err)
+                    log:error(err)
                     os.exit(1)
                 else
                     -- Print the dependency tree
                     local heading = "Dependency tree for '" .. module .. "' (on " .. table.concat(cfg.platform, ", ") .. "):"
-                    print("\n" .. heading .. "")
-                    print(string.rep("=", #heading) .. "\n")
+                    log:info("\n" .. heading .. "")
+                    log:info(string.rep("=", #heading) .. "\n")
 
                     for _, pkg in pairs(dependencies) do
-                        print("  " .. pkg)
+                        log:info("  " .. pkg)
                     end
                 end
             end
@@ -416,7 +417,7 @@ end
 
 -- Print information about Luadist (version, license, etc.).
 function print_info()
-    print([[
+    log:info([[
 FIXME ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
 Released under the MIT License. See FIXME
           ]])
@@ -436,7 +437,7 @@ function apply_settings(variable, value)
 
     -- check whether the settings variable exists
     if cfg[variable] == nil then
-        print("Unknown LuaDist configuration option: '" .. variable .. "'.")
+        log:error("Unknown LuaDist configuration option: '" .. variable .. "'.")
         os.exit(1)
 
     -- ensure the right type
@@ -448,14 +449,14 @@ function apply_settings(variable, value)
         elseif value == "false" or value == "no" or value == "off" or value == "0" then
             value = false
         else
-            print("Value of LuaDist option '" .. variable .. "' must be a boolean.")
+            log:error("Value of LuaDist option '" .. variable .. "' must be a boolean.")
             os.exit(1)
         end
 
     elseif type(cfg[variable]) == "number" then
         value = tonumber(value)
         if not value then
-            print("Value of LuaDist option '" .. variable .. "' must be a number.")
+            log:error("Value of LuaDist option '" .. variable .. "' must be a number.")
             os.exit(1)
         end
 
@@ -463,7 +464,7 @@ function apply_settings(variable, value)
         local err
         value, err = utils.make_table(value, ",")
         if not value then
-            print("Error when parsing the LuaDist variable '" .. variable .. "': " .. err)
+            log:error("Error when parsing the LuaDist variable '" .. variable .. "': " .. err)
             os.exit(1)
         end
     end
@@ -483,7 +484,7 @@ elseif commands[arg[1]] then
 else
     -- unknown command
     if arg[1] then
-        print("Unknown command '" .. arg[1] .. "'. Printing help...\n")
+        log:error("Unknown command '" .. arg[1] .. "'. Printing help...\n")
         print_help()
         os.exit(1)
     end

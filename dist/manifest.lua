@@ -36,7 +36,7 @@ function download_manifest(manifest_urls)
 
     if #manifest_urls == 0 then return nil, "No manifest url specified." end
 
-    print("Downloading manifest information...")
+    log:info("Downloading manifest information...")
     for k, repo in pairs(manifest_urls) do
         local clone_dir = pl.path.join(temp_dir, "manifest_" .. tostring(k))
 

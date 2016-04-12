@@ -1,6 +1,6 @@
 module ("dist.downloader", package.seeall)
 
-local log = require "dist.logger"
+local log = require "dist.log"
 local cfg = require "dist.config"
 local git = require "dist.git"
 local pl = require "pl.import_into"()
@@ -38,7 +38,7 @@ function fetch_pkgs(packages, download_dir, repo_paths)
             return nil, err
         end
 
-        print("Downloading " .. pkg .. "...")
+        log:info("Downloading " .. pkg .. "...")
 
         -- Search repo_paths for one containing requested package
         local sha = nil

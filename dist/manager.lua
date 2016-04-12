@@ -1,5 +1,6 @@
 module ("dist.manager", package.seeall)
 
+local log = require "dist.log"
 local cfg = require "dist.config"
 local mf = require "dist.manifest"
 local utils = require "dist.utils"
@@ -34,7 +35,7 @@ function build_pkg(src_dir, build_dir, variables)
 
     cache_file:close()
 
-    print("Building " .. pl.path.basename(src_dir) .. "...")
+    log:info("Building " .. pl.path.basename(src_dir) .. "...")
 
     -- Set cmake cache command
     local cache_command = cfg.cache_command
