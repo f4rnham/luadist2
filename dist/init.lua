@@ -83,9 +83,9 @@ function install(package_names, deploy_dir, variables)
     return result, err
 end
 
--- Remove 'package_names'
+-- Removes 'package_names' and returns amount of removed modules
 local function _remove(package_names)
-    local not_found = 0
+    local removed = 0
     for _, pkg_name in pairs(package_names) do
         local installed = mgr.get_installed()
         local found_pkg = nil
@@ -99,7 +99,6 @@ local function _remove(package_names)
 
         if found_pkg == nil then
             log:error("Could not remove package '%s', no records of its installation were found", pkg_name)
-            not_found = not_found + 1
         else
             ok, err = mgr.remove_pkg(found_pkg)
             if not ok then
@@ -108,10 +107,11 @@ local function _remove(package_names)
 
             -- If removal was successful, update local manifest
             mgr.save_installed(installed)
+            removed = removed + 1
         end
     end
 
-    return not_found
+    return removed
 end
 
 -- Public wrapper for 'remove' functionality, ensures correct setting of 'deploy_dir'
@@ -124,6 +124,20 @@ function remove(package_names, deploy_dir)
 
     if deploy_dir then cfg.update_root_dir(deploy_dir) end
     local result, err = _remove(package_names)
+    if deploy_dir then cfg.revert_root_dir() end
+
+    return result, err
+end
+
+-- Returns list of installed packages from provided 'deploy_dir'
+function list(deploy_dir)
+    if type(package_names) == "string" then package_names = {package_names} end
+
+    assert(type(package_names) == "table", "dist.remove: Argument 'package_names' is not a string or table.")
+    assert(deploy_dir and type(deploy_dir) == "string", "dist.remove: Argument 'deploy_dir' is not a string.")
+
+    if deploy_dir then cfg.update_root_dir(deploy_dir) end
+    local result, err = mgr.get_installed()
     if deploy_dir then cfg.revert_root_dir() end
 
     return result, err

@@ -185,6 +185,8 @@ function get_installed()
 
     -- Assume no packages were installed, create default manifest with just lua
     if not manifest then
+        log:info("Install manifest not found in current root directory '%s', generating new empty one", cfg.root_dir_abs)
+
         manifest = {packages = {lua = {[cfg.lua_version] = {}}}}
         manifest = rocksolver.utils.load_manifest(manifest, true)
         save_installed(manifest)

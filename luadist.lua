@@ -30,17 +30,15 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         info      - show information about modules
         search    - search repositories for modules
         tree      - print dependency tree of a module
+        clone     - clone source repository of a module
 
     To get help on specific command, run:
 
         luadist help <COMMAND>
         ]],
         run = function (deploy_dir, help_item)
-            deploy_dir = deploy_dir or cfg.root_dir
             help_item = help_item or {}
-            assert(type(deploy_dir) == "string", "luadist.help: Argument 'deploy_dir' is not a string.")
             assert(type(help_item) == "table", "luadist.help: Argument 'help_item' is not a table.")
-            deploy_dir = pl.path.abspath(deploy_dir)
 
             if not help_item or not commands[help_item[1]] then
                 help_item = "help"
@@ -66,10 +64,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
     of LuaDist is used.
 
-    You can use * (an asterisk sign) in the name of the module as a wildcard
-    with the meaning 'any symbols' (in most shells, the module name then must
-    be quoted to prevent the expansion of asterisk by the shell itself).
-
     Optional CMake VARIABLES in -D format (e.g. -Dvariable=value) or LuaDist
     configuration VARIABLES (e.g. -variable=value) can be specified.
         ]],
@@ -78,6 +72,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
             deploy_dir = deploy_dir or cfg.root_dir
             if type(modules) == "string" then modules = {modules} end
             cmake_variables = cmake_variables or {}
+
             assert(type(deploy_dir) == "string", "luadist.install: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.install: Argument 'modules' is not a string or table.")
             assert(type(cmake_variables) == "table", "luadist.install: Argument 'cmake_variables' is not a table.")
@@ -109,12 +104,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
     will be removed.
 
     If DEPLOYMENT_DIRECTORY is not specified, the deployment directory
-    of LuaDist is used. If no MODULES are specified, all installed modules
-    will be removed.
-
-    You can use * (an asterisk sign) in the name of the module as a wildcard
-    with the meaning 'any symbols' (in most shells, the module name then must
-    be quoted to prevent the expansion of asterisk by the shell itself).
+    of LuaDist is used.
 
     Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
     specified.
@@ -124,10 +114,9 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, modules)
-            error("NYI")
-        --[[
             deploy_dir = deploy_dir or cfg.root_dir
             if type(modules) == "string" then modules = {modules} end
+
             assert(type(deploy_dir) == "string", "luadist.remove: Argument 'deploy_dir' is not a string.")
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
             deploy_dir = pl.path.abspath(deploy_dir)
@@ -140,7 +129,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
                print("Removed modules: " .. num)
                return 0
             end
-        ]]
         end
     },
 
@@ -161,25 +149,23 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, strings)
-            error("NYI")
-        --[[
             deploy_dir = deploy_dir or cfg.root_dir
             strings = strings or {}
+
             assert(type(deploy_dir) == "string", "luadist.list: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
             deploy_dir = pl.path.abspath(deploy_dir)
 
             local deployed = dist.get_deployed(deploy_dir)
-            deployed  = depends.filter_packages_by_strings(deployed, strings)
 
             print("\nInstalled modules:")
             print("==================\n")
             for _, pkg in pairs(deployed) do
-                print("  " .. pkg.name .. "-" .. pkg.version .. "\t(" .. pkg.arch .. "-" .. pkg.type .. ")" .. (pkg.provided_by and "\t [provided by " .. pkg.provided_by .. "]" or ""))
+                if utils.name_matches(pkg, strings) then
+                    print("  " .. pkg)
+                end
             end
-            print()
             return 0
-        ]]
         end
     },
 
@@ -198,31 +184,27 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, strings)
-            error("NYI")
-        --[[
             deploy_dir = deploy_dir or cfg.root_dir
             strings = strings or {}
+
             assert(type(deploy_dir) == "string", "luadist.search: Argument 'deploy_dir' is not a string.")
             assert(type(strings) == "table", "luadist.search: Argument 'strings' is not a table.")
             deploy_dir = pl.path.abspath(deploy_dir)
 
-            local available, err = mf.get_manifest()
-            if not available then
+            local manifest, err = mf.get_manifest()
+            if not manifest then
                 print(err)
                 os.exit(1)
             end
 
-            available = depends.filter_packages_by_strings(available, strings)
-            available = depends.sort_by_names(available)
-
             print("\nModules found:")
             print("==============\n")
-            for _, pkg in pairs(available) do
-                print("  " .. pkg.name)
+            for _, pkg in pairs(manifest) do
+                if utils.name_matches(pkg, strings) then
+                    print("  " .. pkg.name)
+                end
             end
-            print()
             return 0
-        ]]
         end
     },
 
@@ -384,7 +366,7 @@ local function run_command(deploy_dir, command, other_idx)
     local items = {}
     local cmake_variables = {}
 
-    -- parse items after the command (and LuaDist or CMake variables)
+    -- Parse items after the command (and LuaDist or CMake variables)
     if other_idx then
         for i = other_idx, #arg do
 
@@ -403,21 +385,21 @@ local function run_command(deploy_dir, command, other_idx)
                 local variable, value = arg[i]:match("^%-(.-)$")
                 apply_settings(variable, "true")
 
-            -- not a LuaDist or CMake variable
+            -- Not a LuaDist or CMake variable
             else
                 table.insert(items, arg[i])
             end
         end
     end
 
-    -- run the required LuaDist functionality
+    -- Run the required LuaDist functionality
     return commands[command].run(pl.path.abspath(deploy_dir), items, cmake_variables)
 end
 
 -- Print information about Luadist (version, license, etc.).
 function print_info()
     print([[
-FIXME ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
+Luadist2 ]].. cfg.version .. [[ - Lua package manager for the LuaDist deployment system.
 Released under the MIT License. See FIXME
           ]])
     return 0

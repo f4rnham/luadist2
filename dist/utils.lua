@@ -44,24 +44,28 @@ function quote(argument)
     return '"' .. argument .. '"'
 end
 
--- Concatenates string values from table into single space separated string
--- If argument is nil, returns empty string
--- If arguments is string itself, returns it
-function table_concat(tbl)
-    if type(tbl) == "string" then
-        return tbl
+-- Returns true if name of package 'pkg' matches partially at least one string provided
+-- in table 'strings'.
+-- Case is ignored. If no strings are specified, returns true.
+function name_matches(pkg, strings)
+    if strings == nil then
+        return true
     end
 
-    res = ""
-    for _, v in pairs(tbl or {}) do
-        if res == "" then
-            res = v
-        else
-            res = res .. " " .. v
+    if type(strings) == "string" then
+        strings = {strings}
+    end
+
+    assert(type(pkg) == "table", "utils.name_matches: Argument 'pkg' is not a table.")
+    assert(type(strings) == "table", "utils.name_matches: Argument 'strings' is not a string or table.")
+
+    for _, str in pairs(strings)
+        if tostring(pkg):find(str) ~= nil then
+            return true
         end
     end
 
-    return res
+    return false
 end
 
 -- FIXME Delete or use logger
