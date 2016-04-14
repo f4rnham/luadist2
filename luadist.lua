@@ -30,7 +30,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         info      - show information about modules
         search    - search repositories for modules
         tree      - print dependency tree of a module
-        clone     - clone source repository of a module
+        fetch     - fetch source repository of a modules
 
     To get help on specific command, run:
 
@@ -347,6 +347,46 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                     for _, pkg in pairs(dependencies) do
                         print("  " .. pkg)
                     end
+                end
+            end
+            return 0
+        end
+    },
+
+   ["fetch"] = {
+        help = [[
+Usage: luadist [DOWNLOAD_DIRECTORY] fetch [MODULES...] [-VARIABLES...]
+
+    The 'fetch' command downloads source repositories of specified modules
+    into provided DOWNLOAD_DIRECTORY.
+
+    If no DOWNLOAD_DIRECTORY is provided, modules are downloaded to
+    temp directory of current LuaDist installation.
+
+    Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
+    specified.
+        ]],
+
+        run = function (download_dir, modules)
+            download_dir = download_dir or cfg.temp_dir_abs
+            modules = modules or {}
+
+            assert(type(download_dir) == "string", "luadist.fetch: Argument 'download_dir' is not a string.")
+            assert(type(modules) == "table", "luadist.fetch: Argument 'modules' is not a table.")
+            download_dir = pl.path.abspath(download_dir)
+
+            if #modules == 0 then
+                print("No modules to fetch specified")
+            else
+                local downloads, err = dist.fetch(download_dir, modules)
+                if downloads then
+                    print("Fetched modules:")
+                    for pkg, path in pairs(downloads) do
+                        print(pkg .. ": " .. path)
+                    end
+                else
+                    print(err)
+                    os.exit(1)
                 end
             end
             return 0

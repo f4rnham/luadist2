@@ -10,7 +10,10 @@ local utils = require "dist.utils"
 local mgr = require "dist.manager"
 local downloader = require "dist.downloader"
 local pl = require "pl.import_into"()
-local DependencySolver = require "rocksolver.DependencySolver"
+local rocksolver = {}
+rocksolver.DependencySolver = require "rocksolver.DependencySolver"
+rocksolver.Package = require "rocksolver.Package"
+rocksolver.const = require "rocksolver.constraints"
 
 -- Installs 'package_names' using optional CMake 'variables'
 local function _install(package_names, variables)
@@ -23,7 +26,7 @@ local function _install(package_names, variables)
         return nil, err
     end
 
-    local solver = DependencySolver(manifest, cfg.platform)
+    local solver = rocksolver.DependencySolver(manifest, cfg.platform)
     local dependencies = {}
 
     for _, package_name in pairs(package_names) do
@@ -141,4 +144,56 @@ function list(deploy_dir)
     if deploy_dir then cfg.revert_root_dir() end
 
     return result, err
+end
+
+-- Downloads packages specified in 'package_names' into 'download_dir' and
+-- returns table <package, package_download_dir>
+function fetch(download_dir, package_names)
+    download_dir = download_dir or cfg.temp_dir_abs
+
+    assert(type(download_dir) == "string", "dist.fetch: Argument 'download_dir' is not a string.")
+    assert(type(package_names) == "table", "dist.fetch: Argument 'package_names' is not a table.")
+    download_dir = pl.path.abspath(download_dir)
+
+    local packages = {}
+    local manifest, err = mf.get_manifest()
+    if not manifest then
+        return nil, err
+    end
+
+    for _, pkg_name in pairs(package_names) do
+        -- If Package instances were provided (through Lua interface), just use them
+        if getmetatable(pkg_name) == rocksolver.Package then
+            table.insert(packages, pkg_name)
+        -- Find best matching package instance for user provided name
+        else
+            assert(type(pkg_name) == "string", "dist.fetch: Elements of argument 'package_names' are not package instances or strings.")
+
+            local name, version = rocksolver.const.split(pkg_name)
+
+            -- If version was provided, use it
+            if version ~= nil then
+                table.insert(packages, rocksolver.Package(name, version, {}, false))
+            -- Else fetch most recent one
+            else
+                if manifest.packages[name] ~= nil and #manifest.packages[name] > 0 then
+                    local latest_pkg = nil
+
+                    for version, _ in pairs(manifest.packages[name]) do
+                        if not latest_pkg or latest_pkg < rocksolver.Package(name, version, {}, false) then
+                            latest_pkg = rocksolver.Package(name, version, {}, false)
+                        end
+                    end
+
+                    assert(latest_pkg ~= nil)
+                    table.insert(packages, latest_pkg)
+                    log:info("Could not determine version of package '%s' to fetch from provided input, getting latest one '%s'", name, tostring(latest_pkg))
+                else
+                    return nil, "Could not find any information about package '" .. name .. "', please verify that it exists in manifest repositories"
+                end
+            end
+        end
+    end
+
+    return downloader.fetch_pkgs(packages, download_dir, manifest.repo_path)
 end
