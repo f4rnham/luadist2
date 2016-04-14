@@ -5,8 +5,9 @@ require "logging.console"
 
 local logger_console
 local logger_file
+local logger_hook
 
-function reload_config()
+function reload_config(hook)
     logger_console = logging.console("%level %message\n")
     logger_file = logging.file(cfg.log_file_abs)
 
@@ -21,9 +22,11 @@ function reload_config()
     else
         logger_file = nil
     end
+
+    logger_hook = hook
 end
 
-reload_config()
+reload_config(nil)
 
 local logger = logging.new(
 function(self, level, message)
@@ -33,6 +36,10 @@ function(self, level, message)
 
     if logger_file then
         logger_file:log(level, message)
+    end
+
+    if logger_hook then
+        logger_hook(level, message)
     end
 
     return true
