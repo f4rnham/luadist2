@@ -100,10 +100,54 @@ local function load_file(filename, load_fnc)
     return load_fnc(str)
 end
 
+-- FIXME
+-- Copy of pl.pretty.read with 'function' check commented out
+local function save_global_env()
+    local env = {}
+    env.hook, env.mask, env.count = debug.gethook()
+    debug.sethook()
+    env.string_mt = getmetatable("")
+    debug.setmetatable("", nil)
+    return env
+end
+
+local function restore_global_env(env)
+    if env then
+        debug.setmetatable("", env.string_mt)
+        debug.sethook(env.hook, env.mask, env.count)
+    end
+end
+
+local function pretty_read(s)
+    pl.utils.assert_arg(1,s,'string')
+    if s:find '^%s*%-%-' then -- may start with a comment..
+        s = s:gsub('%-%-.-\n','')
+    end
+    if not s:find '^%s*{' then return nil,"not a Lua table" end
+    --[[if s:find '[^\'"%w_]function[^\'"%w_]' then
+        local tok = lexer.lua(s)
+        for t,v in tok do
+            if t == 'keyword' and v == 'function' then
+                return nil,"cannot have functions in table definition"
+            end
+        end
+    end]]
+    s = 'return '..s
+    local chunk,err = pl.utils.load(s,'tbl','t',{})
+    if not chunk then return nil,err end
+    local global_env = save_global_env()
+    local ok,ret = pcall(chunk)
+    restore_global_env(global_env)
+    if ok then return ret
+    else
+        return nil,ret
+    end
+end
+
 -- Load and return manifest table from the manifest file,
 -- if manifest file is not present, return nil.
 function load_manifest(manifest_file)
-    return load_file(manifest_file, pl.pretty.read)
+    return load_file(manifest_file, pretty_read) --pl.pretty.read
 end
 
 -- Load and return rockspec table from the rockspec file,
