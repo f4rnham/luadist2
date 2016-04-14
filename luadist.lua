@@ -397,11 +397,9 @@ Usage: luadist [DOWNLOAD_DIRECTORY] fetch [MODULES...] [-VARIABLES...]
 -- Run the functionality of LuaDist 'command' in the 'deploy_dir' with other items
 -- or settings/variables starting at 'other_idx' index of special variable 'arg'.
 local function run_command(deploy_dir, command, other_idx)
-    deploy_dir = deploy_dir or cfg.root_dir
-    assert(type(deploy_dir) == "string", "luadist.run_command: Argument 'deploy_dir' is not a string.")
+    assert(not deploy_dir or type(deploy_dir) == "string", "luadist.run_command: Argument 'deploy_dir' is not a string.")
     assert(type(command) == "string", "luadist.run_command: Argument 'command' is not a string.")
     assert(not other_idx or type(other_idx) == "number", "luadist.run_command: Argument 'other_idx' is not a number.")
-    deploy_dir = pl.path.abspath(deploy_dir)
 
     local items = {}
     local cmake_variables = {}
@@ -433,7 +431,7 @@ local function run_command(deploy_dir, command, other_idx)
     end
 
     -- Run the required LuaDist functionality
-    return commands[command].run(pl.path.abspath(deploy_dir), items, cmake_variables)
+    return commands[command].run(deploy_dir, items, cmake_variables)
 end
 
 -- Print information about Luadist (version, license, etc.).
@@ -501,7 +499,7 @@ if not commands[arg[1]] and commands[arg[2]] then
     return run_command(arg[1], arg[2], 3)
 elseif commands[arg[1]] then
     -- deploy_dir not specified
-    return run_command(cfg.root_dir, arg[1], 2)
+    return run_command(nil, arg[1], 2)
 else
     -- unknown command
     if arg[1] then
