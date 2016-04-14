@@ -88,13 +88,14 @@ end
 
 -- Removes 'package_names' and returns amount of removed modules
 local function _remove(package_names)
+    local installed = mgr.get_installed()
     local removed = 0
     for _, pkg_name in pairs(package_names) do
-        local installed = mgr.get_installed()
+        local name, version = rocksolver.const.split(pkg_name)
         local found_pkg = nil
 
         for i, pkg in pairs(installed) do
-            if pkg_name == tostring(pkg) then
+            if name == pkg.name and (not version or version == tostring(pkg.version)) then
                 found_pkg = table.remove(installed, i)
                 break
             end
@@ -176,7 +177,7 @@ function fetch(download_dir, package_names)
                 table.insert(packages, rocksolver.Package(name, version, {}, false))
             -- Else fetch most recent one
             else
-                if manifest.packages[name] ~= nil and #manifest.packages[name] > 0 then
+                if manifest.packages[name] ~= nil then
                     local latest_pkg = nil
 
                     for version, _ in pairs(manifest.packages[name]) do

@@ -59,7 +59,7 @@ function name_matches(pkg, strings)
     assert(type(pkg) == "table", "utils.name_matches: Argument 'pkg' is not a table.")
     assert(type(strings) == "table", "utils.name_matches: Argument 'strings' is not a string or table.")
 
-    for _, str in pairs(strings)
+    for _, str in pairs(strings) do
         if tostring(pkg):find(str) ~= nil then
             return true
         end
