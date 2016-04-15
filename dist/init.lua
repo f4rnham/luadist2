@@ -59,7 +59,7 @@ local function _install(package_names, variables)
     for pkg, dir in pairs(dirs) do
         ok, err = mgr.install_pkg(pkg, dir, variables)
         if not ok then
-            return nil, "Error installing: " ..err
+            return nil, "Error installing: " ..err, pkg
         end
 
         -- If installation was successful, update local manifest
@@ -80,10 +80,10 @@ function install(package_names, deploy_dir, variables)
     assert(deploy_dir and type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
 
     if deploy_dir then cfg.update_root_dir(deploy_dir) end
-    local result, err = _install(package_names, variables)
+    local result, err, pkg = _install(package_names, variables)
     if deploy_dir then cfg.revert_root_dir() end
 
-    return result, err
+    return result, err, pkg
 end
 
 -- Removes 'package_names' and returns amount of removed modules

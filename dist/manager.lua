@@ -119,7 +119,7 @@ function install_pkg(pkg, pkg_dir, variables)
     pl.path.mkdir(build_dir)
     local ok, err = build_pkg(pkg_dir, build_dir, cmake_variables)
     if not ok then
-        return nil, "Error building package: " .. err
+        return nil, "Error building package '" .. pkg .. "': " .. err
     end
 
     local ok, status, stdout, stderr = pl.utils.executeex("cd " .. utils.quote(build_dir) .. " && " .. cfg.cmake .. " -P cmake_install.cmake")
