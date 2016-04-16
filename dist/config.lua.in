@@ -44,7 +44,7 @@ variables = {
   INSTALL_ETC                        = "etc",
   INSTALL_SHARE                      = "share",
   INSTALL_LMOD                       = pl.path.join("lib", "lua"),
-  INSTALL_CMOD                       = "lib",
+  INSTALL_CMOD                       = pl.path.join("lib", "lua"),
 }
 
 if (variables.CMAKE_GENERATOR == "MinGW Makefiles") then
