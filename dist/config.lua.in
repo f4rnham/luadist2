@@ -86,6 +86,8 @@ function update_root_dir(dir)
     log.reload_config()
 
     pl.path.mkdir(temp_dir_abs)
+    -- FIXME Mkdir doesn't create dir /a/b if dir /a doesn't exist
+    pl.path.mkdir(pl.path.join(root_dir_abs, "share"))
     pl.path.mkdir(share_dir_abs)
 end
 
