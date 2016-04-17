@@ -15,7 +15,7 @@ dependencies = {
     "rocksolver >= 0.3-2",
     "rockspec2cmake >= 0.1-1",
     "penlight >= 1.3.2-2",
-    "lua-git" >= 0.5-1"
+    "lua-git >= 0.5-1",
 }
 build = {
     type = "builtin",
