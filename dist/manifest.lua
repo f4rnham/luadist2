@@ -56,16 +56,20 @@ function download_manifest(manifest_urls)
             return nil, "Could not download manifest from repository with url: '" .. repo .. "': " .. err
         else
             local manifest_file = pl.path.join(clone_dir, cfg.manifest_filename)
-            local current_manifest = load_manifest(manifest_file)
+            local current_manifest, err = load_manifest(manifest_file)
 
-            for pkg, info in pairs(current_manifest.packages) do
-                -- Keep package info from manifest earlier in 'manifest_urls' table if conflicts are found
-                if manifest.packages[pkg] == nil then
-                    manifest.packages[pkg] = info
+            if current_manifest then
+                for pkg, info in pairs(current_manifest.packages) do
+                    -- Keep package info from manifest earlier in 'manifest_urls' table if conflicts are found
+                    if manifest.packages[pkg] == nil then
+                        manifest.packages[pkg] = info
+                    end
                 end
-            end
 
-            table.insert(manifest.repo_path, current_manifest.repo_path)
+                table.insert(manifest.repo_path, current_manifest.repo_path)
+            else
+                return nil, "Could not load manifest from repository with url: '" .. repo .. "': " .. err
+            end
         end
         if not cfg.debug then
             pl.dir.rmtree(clone_dir)
