@@ -23,8 +23,8 @@ local_manifest_file = pl.path.join(share_dir, manifest_filename)
 
 -- Repositories ------------------------------------------------------
 manifest_repos = {
+    "git://gist.github.com/bb0d974fd060b693bf73d49259db82be.git", -- FIXME Remove, testing only
     "git://gist.github.com/efe9312e64d0e492282e.git",
-    "git://gist.github.com/bb0d974fd060b693bf73d49259db82be.git",
 }
 
 -- Settings ----------------------------------------------------------
