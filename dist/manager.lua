@@ -109,9 +109,24 @@ function install_pkg(pkg, pkg_dir, variables)
 
     pkg.spec = rockspec
 
+    -- Check if rockspec provides additional cmake variables
+    if rockspec.build and rockspec.build.type == "cmake" and type(rockspec.build.variables) == "table" then
+        for k, v in pairs(rockspec.build.variables) do
+            -- FIXME Should this overwrite cmake variables set by config?
+            if not cmake_variables[k] then
+                cmake_variables[k] = v
+            end
+        end
+    end
+
     local cmake_commands, err = r2cmake.process_rockspec(rockspec, pkg_dir)
     if not cmake_commands then
-        return nil, "Cound not generate cmake commands for package '" .. pkg .. "': " .. err
+        -- Could not generate cmake commands, but there can be cmake attached
+        if not rockspec.build or rockspec.build.type ~= "cmake" or not pl.path.exists(pl.path.join(pkg_dir, "CMakeLists.txt")) then
+            return nil, "Cound not generate cmake commands for package '" .. pkg .. "': " .. err
+        else
+            log:info("Package '%s': using CMakeLists.txt provided by package itself", tostring(pkg))
+        end
     end
 
     -- Build the package
