@@ -44,11 +44,10 @@ function quote(argument)
     return '"' .. argument .. '"'
 end
 
--- Returns true if name of package 'pkg' matches partially at least one string provided
--- in table 'strings'.
--- Case is ignored. If no strings are specified, returns true.
+-- Returns true if name of package 'pkg' partially matches at least one provided string
+-- in table 'strings', case is ignored, returns true if table 'strings' is empty
 function name_matches(pkg, strings)
-    if strings == nil then
+    if strings == nil or #strings == 0 then
         return true
     end
 

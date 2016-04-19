@@ -139,10 +139,7 @@ end
 
 -- Returns list of installed packages from provided 'deploy_dir'
 function get_installed(deploy_dir)
-    if type(package_names) == "string" then package_names = {package_names} end
-
-    assert(type(package_names) == "table", "dist.remove: Argument 'package_names' is not a string or table.")
-    assert(deploy_dir and type(deploy_dir) == "string", "dist.remove: Argument 'deploy_dir' is not a string.")
+    assert(deploy_dir and type(deploy_dir) == "string", "dist.get_installed: Argument 'deploy_dir' is not a string.")
 
     if deploy_dir then cfg.update_root_dir(deploy_dir) end
     local result, err = mgr.get_installed()
