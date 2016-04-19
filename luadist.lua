@@ -29,8 +29,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] <COMMAND> [ARGUMENTS...] [-VARIABLES...]
         list      - list installed modules
         info      - show information about modules
         search    - search repositories for modules
-        tree      - print dependency tree of a module
-        fetch     - fetch source repository of a modules
+        depends   - print dependencies of a module
+        fetch     - fetch source repository of a module
 
     To get help on specific command, run:
 
@@ -296,14 +296,14 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
         end
     },
 
-    -- Print dependency tree.
-    ["tree"] = {
+    -- Print dependencies.
+    ["depends"] = {
         help = [[
-Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
+Usage: luadist [DEPLOYMENT_DIRECTORY] depends [MODULES...] [-VARIABLES...]
 
-    The 'tree' command prints dependency tree for specified modules.
+    The 'depends' command prints dependencies for specified modules.
 
-    If no MODULES are specified, trees for all available modules are printed.
+    If no MODULES are specified, dependencies for all available modules are printed.
 
     Optional LuaDist configuration VARIABLES (e.g. -variable=value) can be
     specified.
@@ -339,8 +339,8 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] tree [MODULES...] [-VARIABLES...]
                     print(err)
                     os.exit(1)
                 else
-                    -- Print the dependency tree
-                    local heading = "Dependency tree for '" .. module .. "' (on " .. table.concat(cfg.platform, ", ") .. "):"
+                    -- Print the dependencies
+                    local heading = "Dependencies for '" .. module .. "' (on " .. table.concat(cfg.platform, ", ") .. "):"
                     print("\n" .. heading .. "")
                     print(string.rep("=", #heading) .. "\n")
 
