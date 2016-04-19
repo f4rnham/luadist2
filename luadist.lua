@@ -121,6 +121,11 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] remove MODULES... [-VARIABLES...]
             assert(type(modules) == "table", "luadist.remove: Argument 'modules' is not a string or table.")
             deploy_dir = pl.path.abspath(deploy_dir)
 
+            -- If no module is specified, all modules will be removed
+            if #modules == 0 then
+                modules = dist.get_installed(deploy_dir)
+            end
+
             local num, err = dist.remove(modules, deploy_dir)
             if not num then
                 print(err)
@@ -156,7 +161,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
             assert(type(strings) == "table", "luadist.list: Argument 'strings' is not a table.")
             deploy_dir = pl.path.abspath(deploy_dir)
 
-            local deployed = dist.get_deployed(deploy_dir)
+            local deployed = dist.get_installed(deploy_dir)
 
             print("\nInstalled modules:")
             print("==================\n")

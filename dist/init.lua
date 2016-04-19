@@ -87,11 +87,15 @@ function install(package_names, deploy_dir, variables)
 end
 
 -- Removes 'package_names' and returns amount of removed modules
+--
+-- In constrast to cli remove command, this one doesn't remove all packages
+-- when supplied argument is empty table (to prevent possible mistakes),
+-- to achieve such functionality use remove(get_installed(DIR))
 local function _remove(package_names)
     local installed = mgr.get_installed()
     local removed = 0
     for _, pkg_name in pairs(package_names) do
-        local name, version = rocksolver.const.split(pkg_name)
+        local name, version = rocksolver.const.split(tostring(pkg_name))
         local found_pkg = nil
 
         for i, pkg in pairs(installed) do
@@ -134,7 +138,7 @@ function remove(package_names, deploy_dir)
 end
 
 -- Returns list of installed packages from provided 'deploy_dir'
-function list(deploy_dir)
+function get_installed(deploy_dir)
     if type(package_names) == "string" then package_names = {package_names} end
 
     assert(type(package_names) == "table", "dist.remove: Argument 'package_names' is not a string or table.")
