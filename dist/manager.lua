@@ -131,7 +131,7 @@ function install_pkg(pkg, pkg_dir, variables)
 
     -- Build the package
     local build_dir = pl.path.join(cfg.temp_dir_abs, pkg .. "-build")
-    pl.path.mkdir(build_dir)
+    pl.dir.makepath(build_dir)
     local ok, err = build_pkg(pkg_dir, build_dir, cmake_variables)
     if not ok then
         return nil, "Error building package '" .. pkg .. "': " .. err

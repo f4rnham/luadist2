@@ -85,10 +85,8 @@ function update_root_dir(dir)
     log_file_abs            = pl.path.join(root_dir_abs, log_file)
     log.reload_config()
 
-    pl.path.mkdir(temp_dir_abs)
-    -- FIXME Mkdir doesn't create dir /a/b if dir /a doesn't exist
-    pl.path.mkdir(pl.path.join(root_dir_abs, "share"))
-    pl.path.mkdir(share_dir_abs)
+    pl.dir.makepath(temp_dir_abs)
+    pl.dir.makepath(share_dir_abs)
 end
 
 -- Function used when exitting from functions which allow to specify deploy directory

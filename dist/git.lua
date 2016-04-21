@@ -28,7 +28,7 @@ function clone(repository_url, dest_dir, depth, branch)
 
     command = command .. " " .. utils.quote(dest_dir)
     if pl.path.exists(dest_dir) then pl.dir.rmtree(dest_dir) end
-    pl.path.mkdir(dest_dir)
+    pl.dir.makepath(dest_dir)
 
     -- change the current working directory to dest_dir
     local prev_current_dir = pl.path.currentdir()
@@ -137,7 +137,7 @@ function init(dir)
 
     -- create the 'dir' first, since it causes 'git init' to fail on Windows
     -- when the parent directory of 'dir' doesn't exist
-    local ok, err = pl.path.mkdir(dir)
+    local ok, err = pl.dir.makepath(dir)
     if not ok then return nil, err end
 
     local command = "git init " .. utils.quote(dir)
