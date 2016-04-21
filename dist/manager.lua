@@ -175,13 +175,37 @@ function remove_pkg(pkg)
         return nil, "Could not remove package '" .. pkg .. "', specified package does not contain installation info"
     end
 
+    -- Table to store directories which were affected by package removal,
+    -- if they are empty after package removal, they will be removed too
+    local affected_dirs = {}
+
     -- Remove installed files
-    -- FIXME Remove implicitly created directories
     for _, file in pairs(pkg.files) do
         if pl.path.exists(file) then
             pl.file.delete(file)
+
+            local dir = pl.path.splitpath(file)
+            if dir then
+                affected_dirs[dir] = true
+            end
         else
             log:error("Error removing file '%s', not found", file)
+        end
+    end
+
+    -- Remove all directories which are now empty
+    for dir, _ in pairs(affected_dirs) do
+        -- Only remove directories while we are inside of current root
+        -- Also stops removal of directories if we for some reason installed package files outside of root
+        while pl.path.exists(dir) and pl.path.common_prefix(cfg.root_dir_abs, dir) == cfg.root_dir_abs do
+            -- Non empty directory
+            if #pl.dir.getallfiles(dir) ~= 0 or #pl.dir.getdirectories(dir) ~= 0 then
+                break
+            end
+
+            -- Remove directory and move one level higher
+            pl.path.rmdir(dir)
+            dir = pl.path.dirname(dir:gsub(pl.path.sep .. "$", ""))
         end
     end
 
