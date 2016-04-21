@@ -59,10 +59,21 @@ function download_manifest(manifest_urls)
             local current_manifest, err = load_manifest(manifest_file)
 
             if current_manifest then
+                -- Merge manifest.package tables on first two levels (package name and version)
+                -- Note: Don't use pl.tablex.merge because it would merge even dependencies if the same
+                -- package version is present in two different manifests, we want to keep dependencies
+                -- from manifest earlier in 'manifest_urls'
                 for pkg, info in pairs(current_manifest.packages) do
-                    -- Keep package info from manifest earlier in 'manifest_urls' table if conflicts are found
+                    -- Current manifest provides new package, add it
                     if manifest.packages[pkg] == nil then
                         manifest.packages[pkg] = info
+                    -- Add all versions which were not present in earlier manifests
+                    else
+                        for version, deps in pairs(info) do
+                            if manifest.packages[pkg][version] == nil then
+                                manifest.packages[pkg][version] = deps
+                            end
+                        end
                     end
                 end
 
