@@ -330,16 +330,13 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] depends [MODULES...] [-VARIABLES...]
             -- If no modules specified explicitly, assume all modules
             if #modules == 0 then modules = manifest.packages end
 
-            local lua = {packages = {lua = {[cfg.lua_version] = {}}}}
-
             local solver = rocksolver.DependencySolver(manifest, cfg.platform)
-            local installed = rocksolver.utils.load_manifest(lua, true)
 
             for k, module in pairs(modules) do
                 -- If all modules are being queried, extract the name
                 if type(module) == "table" then module = k end
 
-                local dependencies, err = solver:resolve_dependencies(module, installed)
+                local dependencies, err = solver:resolve_dependencies(module, {})
                 if not dependencies then
                     print(err)
                     os.exit(1)

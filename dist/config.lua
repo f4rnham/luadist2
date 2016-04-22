@@ -10,7 +10,6 @@ local pl = require "pl.import_into"()
 -- System information ------------------------------------------------
 version       = "@DIST_VERSION@"   -- Current LuaDist version
 platform      = {"unix", "linux"}
-lua_version   = _VERSION:gsub("Lua ", "")
 
 -- Directories (relative to root_dir) --------------------------------
 root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or pl.path.sep
