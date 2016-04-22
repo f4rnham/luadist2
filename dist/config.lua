@@ -8,6 +8,7 @@ local log = require "dist.log"
 local pl = require "pl.import_into"()
 
 -- System information ------------------------------------------------
+-- FIXME
 version       = "@DIST_VERSION@"   -- Current LuaDist version
 platform      = {"unix", "linux"}
 
@@ -22,12 +23,15 @@ local_manifest_file = pl.path.join(share_dir, manifest_filename)
 
 -- Repositories ------------------------------------------------------
 manifest_repos = {
-    "git://gist.github.com/bb0d974fd060b693bf73d49259db82be.git", -- FIXME Remove, testing only
+    -- Manually updated core manifest, contains lua, lua-git, zlib packages and
+    -- everything other that should not go through LuaRocks management
+    "git://gist.github.com/bb0d974fd060b693bf73d49259db82be.git",
+    -- Generated manifest based on LuaRocks packages
     "git://gist.github.com/efe9312e64d0e492282e.git",
 }
 
 -- Settings ----------------------------------------------------------
-debug         = false         -- Use debug mode (mainly does not clean cache).
+debug         = false         -- Use debug mode (mainly does not clean temp).
 
 -- Available log levels are: DEBUG, INFO, WARN, ERROR, FATAL
 -- Minimum level for log messages to be printed (nil to disable).
