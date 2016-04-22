@@ -44,9 +44,9 @@ function quote(argument)
     return '"' .. argument .. '"'
 end
 
--- Returns true if name of package 'pkg' partially matches at least one provided string
--- in table 'strings', case is ignored, returns true if table 'strings' is empty
-function name_matches(pkg, strings)
+-- Returns true if name of package 'pkg' partially (or fully if 'full_match' is specified)
+-- matches at least one provided string in table 'strings', returns true if table 'strings' is empty
+function name_matches(pkg, strings, full_match)
     if strings == nil or #strings == 0 then
         return true
     end
@@ -59,7 +59,7 @@ function name_matches(pkg, strings)
     assert(type(strings) == "table", "utils.name_matches: Argument 'strings' is not a string or table.")
 
     for _, str in pairs(strings) do
-        if tostring(pkg):find(str) ~= nil then
+        if (not full_match and tostring(pkg):find(str) ~= nil) or tostring(pkg) == str then
             return true
         end
     end

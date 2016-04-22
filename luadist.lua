@@ -83,10 +83,10 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] install MODULES... [-VARIABLES...]
                 return 0
             end
 
-            local ok, err = dist.install(modules, deploy_dir, cmake_variables)
+            local ok, err, status = dist.install(modules, deploy_dir, cmake_variables)
             if not ok then
                 print(err)
-                os.exit(1)
+                os.exit(status)
             else
                 print("Installation successful.")
                 return 0

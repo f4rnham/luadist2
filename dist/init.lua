@@ -15,7 +15,14 @@ rocksolver.DependencySolver = require "rocksolver.DependencySolver"
 rocksolver.Package = require "rocksolver.Package"
 rocksolver.const = require "rocksolver.constraints"
 
--- Installs 'package_names' using optional CMake 'variables'
+-- Installs 'package_names' using optional CMake 'variables',
+-- returns true on success and nil, error_message, error_code on error
+-- Error codes:
+-- 1 - manifest retrieval failed
+-- 2 - dependency resolving failed
+-- 3 - package download failed
+-- 4 - installation of requested package failed
+-- 5 - installation of dependency failed
 local function _install(package_names, variables)
     -- Get installed packages
     local installed = mgr.get_installed()
@@ -23,7 +30,7 @@ local function _install(package_names, variables)
     -- Get manifest
     local manifest, err = mf.get_manifest()
     if not manifest then
-        return nil, err
+        return nil, err, 1
     end
 
     local solver = rocksolver.DependencySolver(manifest, cfg.platform)
@@ -34,7 +41,7 @@ local function _install(package_names, variables)
         local new_dependencies, err = solver:resolve_dependencies(package_name, installed)
 
         if err then
-            return nil, err
+            return nil, err, 2
         end
 
         -- Update dependencies to install with currently found ones and update installed packages
@@ -48,7 +55,7 @@ local function _install(package_names, variables)
     -- Fetch the packages from repository
     local dirs, err = downloader.fetch_pkgs(dependencies, cfg.temp_dir_abs, manifest.repo_path)
     if not dirs then
-        return nil, "Error downloading packages: " .. err
+        return nil, "Error downloading packages: " .. err, 3
     end
 
     -- Get installed packages again, now we will modify and save them after each successful
@@ -59,7 +66,7 @@ local function _install(package_names, variables)
     for pkg, dir in pairs(dirs) do
         ok, err = mgr.install_pkg(pkg, dir, variables)
         if not ok then
-            return nil, "Error installing: " ..err, pkg
+            return nil, "Error installing: " ..err, (utils.name_matches(pkg, package_names, true) and 4) or 5
         end
 
         -- If installation was successful, update local manifest
@@ -80,10 +87,10 @@ function install(package_names, deploy_dir, variables)
     assert(deploy_dir and type(deploy_dir) == "string", "dist.install: Argument 'deploy_dir' is not a string.")
 
     if deploy_dir then cfg.update_root_dir(deploy_dir) end
-    local result, err, pkg = _install(package_names, variables)
+    local result, err, status = _install(package_names, variables)
     if deploy_dir then cfg.revert_root_dir() end
 
-    return result, err, pkg
+    return result, err, status
 end
 
 -- Removes 'package_names' and returns amount of removed modules
