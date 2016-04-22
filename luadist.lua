@@ -231,8 +231,6 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
         ]],
 
         run = function (deploy_dir, modules)
-            error("NYI")
-        --[[
             deploy_dir = deploy_dir or cfg.root_dir
             modules = modules or {}
             assert(type(deploy_dir) == "string", "luadist.info: Argument 'deploy_dir' is not a string.")
@@ -245,59 +243,38 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                 os.exit(1)
             end
 
-            -- if no packages specified explicitly, show just info from .gitmodules for all packages available
+            -- If no packages specified explicitly, show just list all packages from manifest
             if #modules == 0 then
-
-                modules = manifest
-                modules = depends.sort_by_names(modules)
-                local deployed = dist.get_deployed(deploy_dir)
-
-                print("")
-                for _, pkg in pairs(modules) do
+                for _, pkg in pairs(manifest.packages) do
                     print("  " .. pkg.name)
-                    print("  Repository url: " .. (pkg.path or "N/A"))
-                    print()
                 end
                 return 0
-
-            -- if some packages explicitly specified, retrieve and show detailed info about them
+            -- If some packages explicitly specified, retrieve and show detailed info about them
             else
-
                 if #modules > 5 then
                     print("NOTE: More than 5 modules specified - operation may take a longer time.")
                 end
 
-                local deployed = dist.get_deployed(deploy_dir)
-
-                for _, module in pairs(modules) do
-                    manifest, err = package.get_versions_info(module, manifest, deploy_dir, deployed)
-                    if not manifest then
-                        print(err)
-                        os.exit(1)
-                    end
+                local installed = dist.get_installed(deploy_dir)
+                local rockspecs, err = dist.get_rockspec(deploy_dir, modules)
+                if not rockspecs then
+                    print(err)
+                    os.exit(1)
                 end
 
-                modules = depends.find_packages(modules, manifest)
-                modules = depends.sort_by_names(modules)
-
-                print("")
-                for _, pkg in pairs(modules) do
-                    print("  " .. pkg.name .. "-" .. pkg.version .. "  (" .. pkg.arch .. "-" .. pkg.type ..")" .. (pkg.from_installed and "  [info taken from installed version]" or ""))
-                    print("  Description: " .. (pkg.desc or "N/A"))
-                    print("  Author: " .. (pkg.author or "N/A"))
-                    print("  Homepage: " .. (pkg.url or "N/A"))
-                    print("  License: " .. (pkg.license or "N/A"))
-                    print("  Repository url: " .. (pkg.path or "N/A"))
-                    print("  Maintainer: " .. (pkg.maintainer or "N/A"))
-                    if pkg.provides then print("  Provides: " .. utils.table_tostring(pkg.provides)) end
-                    if pkg.depends then print("  Depends: " .. utils.table_tostring(pkg.depends)) end
-                    if pkg.conflicts then print("  Conflicts: " .. utils.table_tostring(pkg.conflicts)) end
-                    print("  State: " .. (depends.is_installed(pkg.name, deployed, pkg.version) and "installed" or "not installed"))
+                for pkg, rockspec in pairs(rockspecs) do
+                    print("  " .. pkg)
+                    print("  Description: " .. ((rockspec.description and rockspec.description.summary) or "N/A"))
+                    print("  Homepage: " .. ((rockspec.description and rockspec.description.homepage) or "N/A"))
+                    print("  License: " .. ((rockspec.description and rockspec.description.license) or "N/A"))
+                    print("  Repository url: " .. ((rockspec.source and rockspec.source.url) or "N/A"))
+                    print("  Maintainer: " .. ((rockspec.description and rockspec.description.maintainer) or "N/A"))
+                    if rockspec.dependencies then print("  Dependencies: " .. table.concat(rockspec.dependencies, "\n                ")) end
+                    print("  State: " .. (installed[pkg.name] and "installed as version" .. installed[pkg.name] or "not installed"))
                     print()
                 end
                 return 0
             end
-        ]]
         end
     },
 

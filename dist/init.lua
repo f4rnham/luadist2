@@ -199,3 +199,31 @@ function fetch(download_dir, package_names)
 
     return downloader.fetch_pkgs(packages, download_dir, manifest.repo_path)
 end
+
+-- Downloads packages specified in 'package_names' into 'download_dir',
+-- loads their rockspec files and returns table <package, rockspec>
+function get_rockspec(download_dir, package_names)
+    download_dir = download_dir or cfg.temp_dir_abs
+
+    assert(type(download_dir) == "string", "dist.get_rockspec: Argument 'download_dir' is not a string.")
+    assert(type(package_names) == "table", "dist.get_rockspec: Argument 'package_names' is not a table.")
+    download_dir = pl.path.abspath(download_dir)
+
+    local downloads, err = fetch(download_dir, package_names)
+    if not downloads then
+        return nil, "Could not download packages: " .. err
+    end
+
+    local rockspecs = {}
+    for pkg, dir in pairs(downloads) do
+        local rockspec_file = pl.path.join(dir, pkg.name .. "-" .. tostring(pkg.version) .. ".rockspec")
+        local rockspec, err = mf.load_rockspec(rockspec_file)
+        if not rockspec then
+            return nil, "Cound not load rockspec for package '" .. pkg .. "' from '" .. rockspec_file .. "': " .. err
+        end
+
+        rockspecs[pkg] = rockspec
+    end
+
+    return rockspecs
+end
