@@ -86,7 +86,12 @@ function update_root_dir(dir)
     share_dir_abs           = pl.path.join(root_dir_abs, share_dir)
     local_manifest_file_abs = pl.path.join(root_dir_abs, local_manifest_file)
     log_file_abs            = pl.path.join(root_dir_abs, log_file)
-    log.reload_config()
+
+    log.reload_config({
+        print_log_level = print_log_level,
+        write_log_level = write_log_level,
+        log_file_abs = log_file_abs,
+    })
 
     pl.dir.makepath(temp_dir_abs)
     pl.dir.makepath(share_dir_abs)

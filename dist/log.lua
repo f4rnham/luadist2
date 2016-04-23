@@ -1,13 +1,12 @@
-local cfg = require "dist.config"
 local logging = require "logging"
 require "logging.file"
 require "logging.console"
 
-local logger_console
-local logger_file
-local logger_hook
+local logger_console = nil
+local logger_file = nil
+local logger_hook = nil
 
-function reload_config(hook)
+function reload_config(cfg, hook)
     logger_console = logging.console("%level %message\n")
     logger_file = logging.file(cfg.log_file_abs)
 
@@ -25,8 +24,6 @@ function reload_config(hook)
 
     logger_hook = hook
 end
-
-reload_config(nil)
 
 local logger = logging.new(
 function(self, level, message)
