@@ -32,7 +32,7 @@ function fetch_pkgs(packages, download_dir, repo_paths)
             return nil, err
         end
 
-        log:info("Downloading '%s'...", pkg)
+        log:info("Downloading '%s'...", tostring(pkg))
 
         -- Search repo_paths for one containing requested package
         local sha = nil
