@@ -113,7 +113,7 @@ local function _remove(package_names)
         end
 
         if found_pkg == nil then
-            log:error("Could not remove package '%s', no records of its installation were found", pkg_name)
+            log:error("Could not remove package '%s', no records of its installation were found", tostring(pkg_name))
         else
             ok, err = mgr.remove_pkg(found_pkg)
             if not ok then
