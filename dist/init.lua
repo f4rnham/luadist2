@@ -14,6 +14,7 @@ local rocksolver = {}
 rocksolver.DependencySolver = require "rocksolver.DependencySolver"
 rocksolver.Package = require "rocksolver.Package"
 rocksolver.const = require "rocksolver.constraints"
+rocksolver.utils = require "rocksolver.utils"
 
 -- Installs 'package_names' using optional CMake 'variables',
 -- returns true on success and nil, error_message, error_code on error
@@ -34,21 +35,60 @@ local function _install(package_names, variables)
     end
 
     local solver = rocksolver.DependencySolver(manifest, cfg.platform)
-    local dependencies = {}
 
-    for _, package_name in pairs(package_names) do
-        -- Resolve dependencies
-        local new_dependencies, err = solver:resolve_dependencies(package_name, installed)
 
-        if err then
+    local function resolve_dependencies(package_names, _installed, preinstall_lua)
+        local dependencies = {}
+        local installed = rocksolver.utils.deepcopy(_installed)
+
+        if preinstall_lua then
+            table.insert(installed, preinstall_lua)
+        end
+
+        for _, package_name in pairs(package_names) do
+            -- Resolve dependencies
+            local new_dependencies, err = solver:resolve_dependencies(package_name, installed)
+
+            if err then
+                return nil, err
+            end
+
+            -- Update dependencies to install with currently found ones and update installed packages
+            -- for next dependency resolving as if previously found dependencies were already installed
+            for _, dependency in pairs(new_dependencies) do
+                dependencies[dependency] = dependency
+                installed[dependency] = dependency
+            end
+        end
+
+        return dependencies
+    end
+
+    -- Try to resolve dependencies as is
+    local dependencies, err = resolve_dependencies(package_names, installed)
+
+    -- If we failed, it is most likely because wrong version of lua package was selected,
+    -- try to cycle through all of them, we may eventually succeed
+    if not dependencies then
+        -- If lua is already installed, we can do nothing about it, user will have to upgrade / downgrade it manually
+        if installed.lua then
             return nil, err, 2
         end
 
-        -- Update dependencies to install with currently found ones and update installed packages
-        -- for next dependency resolving as if previously found dependencies were already installed
-        for _, dependency in pairs(new_dependencies) do
-            dependencies[dependency] = dependency
-            installed[dependency] = dependency
+        -- Try all versions of lua, newer first
+        for version, info in rocksolver.utils.sort(manifest.packages.lua or {}, rocksolver.const.compareVersions) do
+            log:info("Trying to force usage of 'lua %s' to solve dependency resolving issues", version)
+
+            -- Here we do not care about returned error message, we will use the original one if all fails
+            dependencies = resolve_dependencies(package_names, installed, rocksolver.Package("lua", version, info, true))
+
+            if dependencies then
+                break
+            end
+        end
+
+        if not dependencies then
+            return nil, err, 2
         end
     end
 
@@ -57,10 +97,6 @@ local function _install(package_names, variables)
     if not dirs then
         return nil, "Error downloading packages: " .. err, 3
     end
-
-    -- Get installed packages again, now we will modify and save them after each successful
-    -- package installation
-    local installed = mgr.get_installed()
 
     -- Install fetched packages
     for pkg, dir in pairs(dirs) do
