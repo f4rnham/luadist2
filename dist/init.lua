@@ -9,6 +9,7 @@ local mf = require "dist.manifest"
 local utils = require "dist.utils"
 local mgr = require "dist.manager"
 local downloader = require "dist.downloader"
+local ordered = require "dist.ordered"
 local pl = require "pl.import_into"()
 local rocksolver = {}
 rocksolver.DependencySolver = require "rocksolver.DependencySolver"
@@ -38,7 +39,7 @@ local function _install(package_names, variables)
 
 
     local function resolve_dependencies(package_names, _installed, preinstall_lua)
-        local dependencies = {}
+        local dependencies = ordered.Ordered()
         local installed = rocksolver.utils.deepcopy(_installed)
 
         if preinstall_lua then
@@ -80,9 +81,14 @@ local function _install(package_names, variables)
             log:info("Trying to force usage of 'lua %s' to solve dependency resolving issues", version)
 
             -- Here we do not care about returned error message, we will use the original one if all fails
-            dependencies = resolve_dependencies(package_names, installed, rocksolver.Package("lua", version, info, true))
+            local new_dependencies = resolve_dependencies(package_names, installed, rocksolver.Package("lua", version, info, true))
 
-            if dependencies then
+            if new_dependencies then
+                dependencies = ordered.Ordered()
+                dependencies[rocksolver.Package("lua", version, info, false)] = rocksolver.Package("lua", version, info, false)
+                for _, dep in pairs(new_dependencies) do
+                    dependencies[dep] = dep
+                end
                 break
             end
         end
