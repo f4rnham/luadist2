@@ -108,7 +108,7 @@ local function _install(package_names, variables)
     for pkg, dir in pairs(dirs) do
         ok, err = mgr.install_pkg(pkg, dir, variables)
         if not ok then
-            return nil, "Error installing: " ..err, (utils.name_matches(pkg, package_names, true) and 4) or 5
+            return nil, "Error installing: " ..err, (utils.name_matches(tostring(pkg), package_names, true) and 4) or 5
         end
 
         -- If installation was successful, update local manifest

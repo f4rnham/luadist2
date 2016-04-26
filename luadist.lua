@@ -166,7 +166,7 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] list [STRINGS...] [-VARIABLES...]
             print("\nInstalled modules:")
             print("==================\n")
             for _, pkg in pairs(deployed) do
-                if utils.name_matches(pkg, strings) then
+                if utils.name_matches(pkg.name, strings) then
                     print("  " .. pkg)
                 end
             end
@@ -204,9 +204,11 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] search [STRINGS...] [-VARIABLES...]
 
             print("\nModules found:")
             print("==============\n")
-            for _, pkg in pairs(manifest) do
-                if utils.name_matches(pkg, strings) then
-                    print("  " .. pkg.name)
+            for name, versions in pairs(manifest.packages) do
+                if utils.name_matches(name, strings) then
+                    for version in pairs(versions) do
+                        print("  " .. name .. " " .. version)
+                    end
                 end
             end
             return 0
