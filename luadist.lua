@@ -269,8 +269,18 @@ Usage: luadist [DEPLOYMENT_DIRECTORY] info [MODULES...] [-VARIABLES...]
                     print("  License: " .. ((rockspec.description and rockspec.description.license) or "N/A"))
                     print("  Repository url: " .. ((rockspec.source and rockspec.source.url) or "N/A"))
                     print("  Maintainer: " .. ((rockspec.description and rockspec.description.maintainer) or "N/A"))
-                    if rockspec.dependencies then print("  Dependencies: " .. table.concat(rockspec.dependencies, "\n                ")) end
-                    print("  State: " .. (installed[pkg.name] and "installed as version" .. installed[pkg.name] or "not installed"))
+                    if rockspec.dependencies then
+                        print("  Dependencies: " .. table.concat(rockspec.dependencies, "\n                "))
+                    end
+
+                    local installed_version = nil
+                    for _, installed_pkg in pairs(installed) do
+                        if pkg.name == installed_pkg.name then
+                            installed_version = tostring(installed_pkg)
+                        end
+                    end
+
+                    print("  State: " .. (installed_version and "installed as " .. installed_version or "not installed"))
                     print()
                 end
                 return 0
