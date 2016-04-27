@@ -50,6 +50,7 @@ install(FILES ${dist.utils_SOURCES} DESTINATION ${INSTALL_LMOD}/dist RENAME util
 install(FILES ${dist.downloader_SOURCES} DESTINATION ${INSTALL_LMOD}/dist RENAME downloader.lua)
 install(FILES ${dist.init_SOURCES} DESTINATION ${INSTALL_LMOD}/dist RENAME init.lua)
 install(FILES ${dist.git_SOURCES} DESTINATION ${INSTALL_LMOD}/dist RENAME git.lua)
+install(FILES dist/ordered.lua DESTINATION ${INSTALL_LMOD}/dist)
 
 # 'Detect' platform, this detection is reversed 'rock2cmake_platform' table from
 # https://github.com/LuaDist2/rockspec2cmake/blob/master/rockspec2cmake/CMakeBuilder.lua
