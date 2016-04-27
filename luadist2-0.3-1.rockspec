@@ -18,16 +18,5 @@ dependencies = {
     "lua-git >= 0.5-1",
 }
 build = {
-    type = "builtin",
-    modules = {
-        ["dist.utils"] = "dist/utils.lua",
-        ["dist.manifest"] = "dist/manifest.lua",
-        ["dist.manager"] = "dist/manager.lua",
-        ["dist.log"] = "dist/log.lua",
-        ["dist.git"] = "dist/git.lua",
-        ["dist.downloader"] = "dist/downloader.lua",
-        ["dist.config"] = "dist/config.lua",
-        ["dist.init"] = "dist/init.lua",
-        ["luadist"] = "luadist.lua",
-    }
+    type = "cmake",
 }

@@ -8,9 +8,8 @@ local log = require "dist.log"
 local pl = require "pl.import_into"()
 
 -- System information ------------------------------------------------
--- FIXME
-version       = "@DIST_VERSION@"   -- Current LuaDist version
-platform      = {"unix", "linux"}
+version       = "@luadist2_VERSION@"
+platform      = @PLATFORM@
 
 -- Directories (relative to root_dir) --------------------------------
 root_dir      = os.getenv("DIST_ROOT") or utils.get_luadist_location() or pl.path.sep
