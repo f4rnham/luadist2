@@ -1,5 +1,3 @@
-module ("dist.manager", package.seeall)
-
 local log = require "dist.log".logger
 local cfg = require "dist.config"
 local mf = require "dist.manifest"
@@ -11,10 +9,11 @@ rocksolver.utils = require "rocksolver.utils"
 rocksolver.Package = require "rocksolver.Package"
 rocksolver.const = require "rocksolver.constraints"
 
+local manager = {}
 
 -- Builds package from 'src_dir' to 'build_dir' using CMake variables 'variables'
 -- Returns true on success or nil, error_message on error
-function build_pkg(src_dir, build_dir, variables)
+function manager.build_pkg(src_dir, build_dir, variables)
     variables = variables or {}
 
     assert(type(src_dir) == "string" and pl.path.isabs(src_dir), "manager.build_pkg: Argument 'src_dir' is not an absolute path.")
@@ -64,7 +63,7 @@ function build_pkg(src_dir, build_dir, variables)
 end
 
 -- Installs package 'pkg' from 'pkg_dir' using optional CMake 'variables'.
-function install_pkg(pkg, pkg_dir, variables)
+function manager.install_pkg(pkg, pkg_dir, variables)
     variables = variables or {}
 
     assert(getmetatable(pkg) == rocksolver.Package, "manager.install_pkg: Argument 'pkg' is not a Package instance.")
@@ -132,7 +131,7 @@ function install_pkg(pkg, pkg_dir, variables)
     -- Build the package
     local build_dir = pl.path.join(cfg.temp_dir_abs, pkg .. "-build")
     pl.dir.makepath(build_dir)
-    local ok, err = build_pkg(pkg_dir, build_dir, cmake_variables)
+    local ok, err = manager.build_pkg(pkg_dir, build_dir, cmake_variables)
     if not ok then
         return nil, "Error building package '" .. pkg .. "': " .. err
     end
@@ -168,7 +167,7 @@ function install_pkg(pkg, pkg_dir, variables)
 end
 
 -- Remove package 'pkg'.
-function remove_pkg(pkg)
+function manager.remove_pkg(pkg)
     assert(getmetatable(pkg) == rocksolver.Package, "manager.remove_pkg: Argument 'pkg' is not a Package instance.")
 
     if not pkg.files then
@@ -212,14 +211,14 @@ function remove_pkg(pkg)
     return true
 end
 
-function save_installed(manifest)
+function manager.save_installed(manifest)
     assert(type(manifest) == "table", "manager.save_installed: Argument 'manifest' is not a table.")
 
     return pl.pretty.dump(manifest, cfg.local_manifest_file_abs)
 end
 
 -- Return manifest consisting of installed packages
-function get_installed()
+function manager.get_installed()
     local manifest, err = mf.load_manifest(cfg.local_manifest_file_abs)
 
     -- Assume no packages were installed, create default manifest with just lua
@@ -227,7 +226,7 @@ function get_installed()
         log:info("Install manifest not found in current root directory '%s', generating new empty one (%s)", cfg.root_dir_abs, err)
 
         manifest = {}
-        save_installed(manifest)
+        manager.save_installed(manifest)
         return manifest
     end
 
@@ -240,3 +239,5 @@ function get_installed()
 
     return manifest
 end
+
+return manager

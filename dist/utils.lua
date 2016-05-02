@@ -1,10 +1,9 @@
-module ("dist.utils", package.seeall)
-
 local pl = require "pl.import_into"()
 
+local utils = {}
 
 -- Obtain LuaDist location by checking available package locations
-function get_luadist_location()
+function utils.get_luadist_location()
   local paths = {}
   package.path:gsub("([^;]+)", function(c) table.insert(paths, c) end)
 
@@ -22,7 +21,7 @@ function get_luadist_location()
 end
 
 -- Return string argument quoted for a command line usage
-function quote(argument)
+function utils.quote(argument)
     assert(type(argument) == "string", "utils.quote: Argument 'argument' is not a string.")
 
     -- replace '/' path separators for '\' on Windows
@@ -46,7 +45,7 @@ end
 
 -- Returns true if 'pkg_name' partially (or fully if 'full_match' is specified)
 -- matches at least one provided string in table 'strings', returns true if table 'strings' is empty
-function name_matches(pkg_name, strings, full_match)
+function utils.name_matches(pkg_name, strings, full_match)
     if strings == nil or #strings == 0 then
         return true
     end
@@ -67,17 +66,4 @@ function name_matches(pkg_name, strings, full_match)
     return false
 end
 
--- FIXME Delete or use logger
--- Print elements of table in a structured way, for debugging only
-function print_table(tbl, indent)
-  if not indent then indent = 0 end
-  for k, v in pairs(tbl) do
-    formatting = string.rep("  ", indent) .. k .. ": "
-    if type(v) == "table" then
-      print(formatting)
-      print_table(v, indent + 1)
-    else
-      print(formatting .. tostring(v))
-    end
-  end
-end
+return utils

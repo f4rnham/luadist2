@@ -1,19 +1,18 @@
-module ("dist.manifest", package.seeall)
-
 local log = require "dist.log".logger
 local cfg = require "dist.config"
 local git = require "dist.git"
 local utils = require "dist.utils"
 local pl = require "pl.import_into"()
 
+local manifest_module = {}
 
 -- Return the joined manifest table from 'cfg.manifest_repos' locations
 local manifest = nil
-function get_manifest()
+function manifest_module.get_manifest()
     -- Download manifest if this is first time we are requesting it in this run,
     -- otherwise it is cached in memory until luadist is terminated
     if manifest == nil then
-        manifest, err = download_manifest(cfg.manifest_repos)
+        manifest, err = manifest_module.download_manifest(cfg.manifest_repos)
         if not manifest then
             return nil, "Error downloading manifest: " .. err
         end
@@ -24,7 +23,7 @@ end
 
 -- Download manifest from the table of git 'manifest_urls' and return manifest
 -- table on success and nil and error message on error.
-function download_manifest(manifest_urls)
+function manifest_module.download_manifest(manifest_urls)
     manifest_urls = manifest_urls or cfg.manifest_repos
     if type(manifest_urls) == "string" then manifest_urls = {manifest_urls} end
 
@@ -56,7 +55,7 @@ function download_manifest(manifest_urls)
             return nil, "Could not download manifest from repository with url: '" .. repo .. "': " .. err
         else
             local manifest_file = pl.path.join(clone_dir, cfg.manifest_filename)
-            local current_manifest, err = load_manifest(manifest_file)
+            local current_manifest, err = manifest_module.load_manifest(manifest_file)
 
             if current_manifest then
                 -- Merge manifest.package tables on first two levels (package name and version)
@@ -161,12 +160,14 @@ end
 
 -- Load and return manifest table from the manifest file,
 -- if manifest file is not present, return nil.
-function load_manifest(manifest_file)
+function manifest_module.load_manifest(manifest_file)
     return load_file(manifest_file, pretty_read) --pl.pretty.read
 end
 
 -- Load and return rockspec table from the rockspec file,
 -- if rockspec file is not present, return nil.
-function load_rockspec(rockspec_file)
+function manifest_module.load_rockspec(rockspec_file)
     return load_file(rockspec_file, pl.pretty.load)
 end
+
+return manifest_module

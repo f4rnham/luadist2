@@ -1,7 +1,5 @@
 -- Main API of LuaDist
 
-module ("dist", package.seeall)
-
 local log = require "dist.log".logger
 local cfg = require "dist.config"
 local git = require "dist.git"
@@ -16,6 +14,8 @@ rocksolver.DependencySolver = require "rocksolver.DependencySolver"
 rocksolver.Package = require "rocksolver.Package"
 rocksolver.const = require "rocksolver.constraints"
 rocksolver.utils = require "rocksolver.utils"
+
+local dist = {}
 
 -- Installs 'package_names' using optional CMake 'variables',
 -- returns true on success and nil, error_message, error_code on error
@@ -121,7 +121,7 @@ end
 
 -- Public wrapper for 'install' functionality, ensures correct setting of 'deploy_dir'
 -- and performs argument checks
-function install(package_names, deploy_dir, variables)
+function dist.install(package_names, deploy_dir, variables)
     if not package_names then return true end
     if type(package_names) == "string" then package_names = {package_names} end
 
@@ -173,7 +173,7 @@ end
 
 -- Public wrapper for 'remove' functionality, ensures correct setting of 'deploy_dir'
 -- and performs argument checks
-function remove(package_names, deploy_dir)
+function dist.remove(package_names, deploy_dir)
     if type(package_names) == "string" then package_names = {package_names} end
 
     assert(type(package_names) == "table", "dist.remove: Argument 'package_names' is not a string or table.")
@@ -187,7 +187,7 @@ function remove(package_names, deploy_dir)
 end
 
 -- Returns list of installed packages from provided 'deploy_dir'
-function get_installed(deploy_dir)
+function dist.get_installed(deploy_dir)
     assert(deploy_dir and type(deploy_dir) == "string", "dist.get_installed: Argument 'deploy_dir' is not a string.")
 
     if deploy_dir then cfg.update_root_dir(deploy_dir) end
@@ -199,7 +199,7 @@ end
 
 -- Downloads packages specified in 'package_names' into 'download_dir' and
 -- returns table <package, package_download_dir>
-function fetch(download_dir, package_names)
+function dist.fetch(download_dir, package_names)
     download_dir = download_dir or cfg.temp_dir_abs
 
     assert(type(download_dir) == "string", "dist.fetch: Argument 'download_dir' is not a string.")
@@ -251,14 +251,14 @@ end
 
 -- Downloads packages specified in 'package_names' into 'download_dir',
 -- loads their rockspec files and returns table <package, rockspec>
-function get_rockspec(download_dir, package_names)
+function dist.get_rockspec(download_dir, package_names)
     download_dir = download_dir or cfg.temp_dir_abs
 
     assert(type(download_dir) == "string", "dist.get_rockspec: Argument 'download_dir' is not a string.")
     assert(type(package_names) == "table", "dist.get_rockspec: Argument 'package_names' is not a table.")
     download_dir = pl.path.abspath(download_dir)
 
-    local downloads, err = fetch(download_dir, package_names)
+    local downloads, err = dist.fetch(download_dir, package_names)
     if not downloads then
         return nil, "Could not download packages: " .. err
     end
@@ -276,3 +276,5 @@ function get_rockspec(download_dir, package_names)
 
     return rockspecs
 end
+
+return dist

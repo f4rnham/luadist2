@@ -1,5 +1,3 @@
-module ("dist.downloader", package.seeall)
-
 local log = require "dist.log".logger
 local cfg = require "dist.config"
 local git = require "dist.git"
@@ -7,10 +5,11 @@ local ordered = require "dist.ordered"
 local pl = require "pl.import_into"()
 local Package = require "rocksolver.Package"
 
+local downloader = {}
 
 -- Fetches packages (table 'packages') to 'download_dir' from 'repo_paths'
 -- Returns table of <Package, path to download directory> or nil and an error message on error
-function fetch_pkgs(packages, download_dir, repo_paths)
+function downloader.fetch_pkgs(packages, download_dir, repo_paths)
     assert(type(packages) == "table", "downloader.fetch_pkgs: Argument 'packages' is not a table.")
     assert(type(download_dir) == "string" and pl.path.isabs(download_dir), "downloader.fetch_pkgs: Argument 'download_dir' is not an absolute path.")
     assert(type(repo_paths) == "table", "downloader.fetch_pkgs: Argument 'repo_paths' is not a table.")
@@ -70,3 +69,5 @@ function fetch_pkgs(packages, download_dir, repo_paths)
 
     return fetched_dirs
 end
+
+return downloader
