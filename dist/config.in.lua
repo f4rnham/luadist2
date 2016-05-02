@@ -41,13 +41,20 @@ log_file = pl.path.join(share_dir, "luadist.log")
 
 -- CMake variables ---------------------------------------------------
 variables = {
-  --- Install defaults
-  INSTALL_BIN                        = "bin",
-  INSTALL_LIB                        = "lib",
-  INSTALL_ETC                        = "etc",
-  INSTALL_SHARE                      = "share",
-  INSTALL_LMOD                       = pl.path.join("lib", "lua"),
-  INSTALL_CMOD                       = pl.path.join("lib", "lua"),
+    -- Install defaults
+    INSTALL_BIN                        = "bin",
+    INSTALL_LIB                        = "lib",
+    INSTALL_ETC                        = "etc",
+    INSTALL_SHARE                      = "share",
+    INSTALL_LMOD                       = pl.path.join("lib", "lua"),
+    INSTALL_CMOD                       = pl.path.join("lib", "lua"),
+
+    -- RPath functionality
+    CMAKE_SKIP_BUILD_RPATH             = "FALSE",
+    CMAKE_BUILD_WITH_INSTALL_RPATH     = "FALSE",
+    CMAKE_INSTALL_RPATH                = "$ORIGIN/../lib",
+    CMAKE_INSTALL_RPATH_USE_LINK_PATH  = "TRUE",
+    CMAKE_INSTALL_NAME_DIR             = "@executable_path/../lib",
 }
 
 if (variables.CMAKE_GENERATOR == "MinGW Makefiles") then
