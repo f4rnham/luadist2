@@ -52,27 +52,26 @@ install(FILES ${dist.init_SOURCES} DESTINATION ${INSTALL_LMOD}/dist RENAME init.
 install(FILES ${dist.git_SOURCES} DESTINATION ${INSTALL_LMOD}/dist RENAME git.lua)
 install(FILES dist/ordered.lua DESTINATION ${INSTALL_LMOD}/dist)
 
-# 'Detect' platform, this detection is reversed 'rock2cmake_platform' table from
-# https://github.com/LuaDist2/rockspec2cmake/blob/master/rockspec2cmake/CMakeBuilder.lua
-# and can be improved
-if (UNIX)
-    list(APPEND PLATFORM "unix" "linux" "freebsd")
-endif()
+## Platform detection
+# By default use system name
+set(DETECTED_PLATFORM ${dollar}{CMAKE_SYSTEM_NAME})
+string(TOLOWER ${dollar}{DETECTED_PLATFORM} DETECTED_PLATFORM)
 
-if (APPLE)
-    list(APPEND PLATFORM "macosx")
-endif()
-
-if (WIN32)
-    list(APPEND PLATFORM "windows" "win32" "mingw32" "msys")
-endif()
-
-if (CYGWIN)
-    list(APPEND PLATFORM "cygwin")
+# Overrides for more specific platforms
+if (DETECTED_PLATFORM STREQUAL "darwin")
+    set(DETECTED_PLATFORM macosx)
+elseif (MINGW)
+    set(DETECTED_PLATFORM mingw32)
+elseif (MSYS)
+    set(DETECTED_PLATFORM msys)
+elseif (CYGWIN)
+    set(DETECTED_PLATFORM cygwin)
+elseif (WIN32)
+    set(DETECTED_PLATFORM win32)
 endif()
 
 # Convert detected platform into lua array of strings
-string(REPLACE ";" "\", \"" _TMP_PLATFORM "${PLATFORM}")
+string(REPLACE ";" "\", \"" _TMP_PLATFORM "${DETECTED_PLATFORM}")
 string(CONCAT PLATFORM "{\"" "${_TMP_PLATFORM}" "\"}")
 
 # Configure
