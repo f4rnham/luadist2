@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 project(luadist2 C CXX)
-set(luadist2_VERSION 0.3-1)
+set(luadist2_VERSION 0.5-1)
 
 set(ENV{LUA_DIR} ${CMAKE_INSTALL_PREFIX})
 find_package(Lua REQUIRED)
@@ -54,8 +54,8 @@ install(FILES dist/ordered.lua DESTINATION ${INSTALL_LMOD}/dist)
 
 ## Platform detection
 # By default use system name
-set(DETECTED_PLATFORM ${dollar}{CMAKE_SYSTEM_NAME})
-string(TOLOWER ${dollar}{DETECTED_PLATFORM} DETECTED_PLATFORM)
+set(DETECTED_PLATFORM ${CMAKE_SYSTEM_NAME})
+string(TOLOWER ${DETECTED_PLATFORM} DETECTED_PLATFORM)
 
 # Overrides for more specific platforms
 if (DETECTED_PLATFORM STREQUAL "darwin")
@@ -68,6 +68,8 @@ elseif (CYGWIN)
     set(DETECTED_PLATFORM cygwin)
 elseif (WIN32)
     set(DETECTED_PLATFORM win32)
+elseif (UNIX)
+    set(DETECTED_PLATFORM unix)
 endif()
 
 # Convert detected platform into lua array of strings
