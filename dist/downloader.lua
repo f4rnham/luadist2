@@ -50,7 +50,7 @@ function downloader.fetch_pkgs(packages, download_dir, repo_paths)
                 if ok then
                     break
                 else
-                    return nil, "Could not fetch package '" .. pkg .. "' from repository '" .. repo_url "' to '" .. clone_dir .. "': " .. err
+                    return nil, "Could not fetch package '" .. pkg .. "' from repository '" .. repo_url .. "' to '" .. clone_dir .. "': " .. err
                 end
             end
         end
