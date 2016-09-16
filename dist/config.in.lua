@@ -26,7 +26,7 @@ manifest_repos = {
     -- everything other that should not go through LuaRocks management
     "git://github.com/LuaDist-core/manifest.git",
     -- Generated manifest based on LuaRocks packages
-    "git://gist.github.com/efe9312e64d0e492282e.git",
+    "git://github.com/LuaDist2/manifest.git",
 }
 
 -- Settings ----------------------------------------------------------
